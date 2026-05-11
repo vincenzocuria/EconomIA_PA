@@ -4,7 +4,6 @@ from pathlib import Path
 from flask import Flask
 
 from app.config import INSTANCE_DIR, config_by_name
-from app.debug_log import configure_dev_debug_logging, dlog
 from app.extensions import csrf, db, login_manager, migrate
 
 
@@ -75,8 +74,6 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(backup_export_bp)
     app.register_blueprint(filiali_banca_bp)
 
-    configure_dev_debug_logging(app)
-
     with app.app_context():
         db.create_all()
         from app.services.schema_filiale import applica_schema_filiale_banca
@@ -103,21 +100,11 @@ def _ensure_default_user(app: Flask) -> None:
     password = os.environ.get("ECONOMIA_PA_ADMIN_PASSWORD")
     n = User.query.count()
 
-    dlog(
-        app,
-        "bootstrap utenti: count=%s env_user=%r password_env_set=%s sync_flag=%s",
-        n,
-        username,
-        bool(password),
-        _env_flag_true("ECONOMIA_PA_ADMIN_SYNC"),
-    )
-
     if n > 0:
         # ECONOMIA_PA_* vale solo alla prima creazione; per allineare un DB già
         # esistente imposta ECONOMIA_PA_ADMIN_SYNC=1 (una volta) con password nel .env.
         if n == 1 and _env_flag_true("ECONOMIA_PA_ADMIN_SYNC") and password:
             u = User.query.first()
-            dlog(app, "bootstrap: sync admin id=%s vecchio_username=%r", u.id, u.username)
             u.username = username.strip()
             u.password_hash = generate_password_hash(password)
             db.session.commit()
@@ -125,28 +112,6 @@ def _ensure_default_user(app: Flask) -> None:
                 "ECONOMIA_PA_ADMIN_SYNC: credenziali aggiornate dal .env. "
                 "Rimuovi ECONOMIA_PA_ADMIN_SYNC dopo l'uso."
             )
-        else:
-            if n == 1:
-                u = User.query.first()
-                want = username.strip()
-                if u.username != want:
-                    dlog(
-                        app,
-                        "bootstrap: nel DB username=%r, nel .env ECONOMIA_PA_ADMIN_USER=%r → "
-                        "il login con %r fallisce. Aggiungi ECONOMIA_PA_ADMIN_SYNC=1 (e password nel .env), "
-                        "riavvia una volta, poi rimuovi il flag.",
-                        u.username,
-                        want,
-                        want,
-                    )
-                else:
-                    dlog(
-                        app,
-                        "bootstrap: utente n=1 username=%r coincide col .env (password DB non aggiornata da env senza SYNC)",
-                        u.username,
-                    )
-            else:
-                dlog(app, "bootstrap: utente esistente, nessuna creazione/sync (n=%s)", n)
         return
 
     if not password:
@@ -162,7 +127,6 @@ def _ensure_default_user(app: Flask) -> None:
     )
     db.session.add(u)
     db.session.commit()
-    dlog(app, "bootstrap: creato utente iniziale username=%r id=%s", u.username, u.id)
 
 
 def _ensure_settings_rows() -> None:
