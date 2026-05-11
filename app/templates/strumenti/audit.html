@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Registro modifiche — EconomIA_PA{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="h4 mb-0">Tracciato operazioni (ultime 200)</h1>
+  <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('backup_export.index') }}">Strumenti</a>
+</div>
+<div class="table-responsive card border-0 shadow-sm">
+  <table class="table table-sm mb-0">
+    <thead class="table-light"><tr><th>Data/ora</th><th>Entità</th><th>ID</th><th>Azione</th><th>Dettaglio</th><th>Utente</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td class="text-nowrap">{{ r.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+        <td>{{ r.entita }}</td>
+        <td>{{ r.entita_id or '—' }}</td>
+        <td>{{ r.azione }}</td>
+        <td class="small text-break" style="max-width:20rem">{{ r.dettaglio }}</td>
+        <td>{{ r.user_id or '—' }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="6" class="p-4 text-muted">Nessun record.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

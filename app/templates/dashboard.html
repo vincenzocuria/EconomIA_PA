@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — EconomIA_PA{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0">Dashboard</h1>
+  <form class="d-flex align-items-center gap-2" method="get" action="{{ url_for('main.dashboard') }}">
+    <label class="small text-muted mb-0">Anno</label>
+    <input type="number" class="form-control form-control-sm" name="anno" value="{{ anno }}" style="width:6rem">
+    <button class="btn btn-sm btn-outline-secondary" type="submit">Aggiorna</button>
+  </form>
+</div>
+
+<div class="alert alert-secondary small mb-4">
+  Strumento di <strong>registro locale</strong> per supporto, ordinamento e pre-rendicontazione.
+  Non sostituisce protocollo, contabilità ufficiale né conservazione digitale dell’ente.
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small">Saldo iniziale</div>
+        <div class="fs-5 fw-semibold">{{ saldo_iniziale|eur }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small">Saldo attuale</div>
+        <div class="fs-5 fw-semibold {% if saldo_attuale < 0 %}text-danger{% endif %}">{{ saldo_attuale|eur }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small">Entrate / reintegri</div>
+        <div class="fs-6 fw-semibold text-success">{{ tot_entrate|eur }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small">Uscite</div>
+        <div class="fs-6 fw-semibold text-danger">{{ tot_uscite|eur }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Indicatori</div>
+      <ul class="list-group list-group-flush small">
+        <li class="list-group-item d-flex justify-content-between"><span>Movimenti (anno)</span><span>{{ n_mov }}</span></li>
+        <li class="list-group-item d-flex justify-content-between"><span>Buoni (anno)</span><span>{{ n_buoni }}</span></li>
+        <li class="list-group-item d-flex justify-content-between"><span>Movimenti senza allegato</span><span>{{ allegati_mancanti }}</span></li>
+        <li class="list-group-item d-flex justify-content-between"><span>Ultimo verbale</span>
+          <span>{% if ultimo_verbale %}T{{ ultimo_verbale.trimestre }} — {{ ultimo_verbale.generato_il.strftime('%d/%m/%Y') }}{% else %}—{% endif %}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between"><span>Riferimento scadenza trimestre</span>
+          <span>{% if prossima_scadenza %}{{ prossima_scadenza.strftime('%d/%m/%Y') }}{% else %}—{% endif %}</span>
+        </li>
+        <li class="list-group-item d-flex justify-content-between"><span>Ultimo backup</span>
+          <span>{% if ultimo_backup %}{{ ultimo_backup.strftime('%d/%m/%Y %H:%M') }}{% else %}Mai{% endif %}</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Alert</div>
+      <div class="card-body p-0">
+        {% if alert %}
+        <ul class="list-group list-group-flush small">
+          {% for a in alert %}
+          <li class="list-group-item {% if a.livello == 'danger' %}text-danger{% elif a.livello == 'warning' %}text-warning{% elif a.livello == 'info' %}text-primary{% else %}text-secondary{% endif %}">{{ a.testo }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="p-3 mb-0 text-muted small">Nessun alert prioritario.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm mt-4">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center">
+    <span class="fw-semibold">Movimenti recenti</span>
+    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('movimenti.lista', anno=anno) }}">Vai al registro</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-sm table-hover mb-0">
+      <thead class="table-light"><tr><th>N.</th><th>Data</th><th>Tipo</th><th>Importo</th><th>Causale</th></tr></thead>
+      <tbody>
+        {% for m in movimenti_recenti %}
+        <tr>
+          <td>{{ '%04d'|format(m.numero_progressivo) }}</td>
+          <td>{{ m.data_movimento.strftime('%d/%m/%Y') }}</td>
+          <td>{{ m.tipo.value }}</td>
+          <td>{{ m.importo|eur }}</td>
+          <td class="text-truncate" style="max-width:14rem">{{ m.causale }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="5" class="text-muted p-3">Nessun movimento per questo anno.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

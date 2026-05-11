@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Strumenti — EconomIA_PA{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Strumenti</h1>
+<form class="d-flex align-items-center gap-2 mb-4" method="get">
+  <label class="small text-muted mb-0">Anno riferimento</label>
+  <input type="number" class="form-control form-control-sm" name="anno" value="{{ anno }}" style="width:6rem">
+  <button class="btn btn-sm btn-outline-secondary" type="submit">Aggiorna</button>
+</form>
+
+<div class="row g-4">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white fw-semibold">Backup</div>
+      <div class="card-body">
+        <p class="small text-muted">ZIP con database SQLite e cartella uploads.</p>
+        <form method="post" action="{{ url_for('backup_export.backup') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-warning">Crea backup e scarica</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white fw-semibold">Verbale trimestrale (PDF)</div>
+      <div class="card-body">
+        <p class="small text-muted">Genera e registra il verbale nel sistema.</p>
+        <div class="d-flex flex-wrap gap-2">
+          {% for t in [1,2,3,4] %}
+          <form method="post" action="{{ url_for('backup_export.verbale_pdf', anno=anno, trimestre=t) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm btn-outline-primary">T{{ t }}</button>
+          </form>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white fw-semibold">Tracciato</div>
+      <div class="card-body">
+        <a class="btn btn-outline-secondary" href="{{ url_for('backup_export.audit_list') }}">Registro modifiche e operazioni</a>
+      </div>
+    </div>
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Esportazioni Excel</div>
+      <div class="card-body d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-success" href="{{ url_for('backup_export.export_movimenti', anno=anno) }}">Movimenti</a>
+        <a class="btn btn-outline-success" href="{{ url_for('backup_export.export_buoni', anno=anno) }}">Buoni</a>
+        <a class="btn btn-outline-success" href="{{ url_for('backup_export.export_riepilogo', anno=anno) }}">Riepilogo annuale</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

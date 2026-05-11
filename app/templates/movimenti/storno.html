@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Storno movimento — EconomIA_PA{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">Storno movimento {{ '%04d'|format(m.numero_progressivo) }}/{{ m.anno }}</h1>
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-body small">
+    <p class="mb-1"><strong>Importo:</strong> {{ m.importo|eur }} — <strong>Tipo:</strong> {{ m.tipo.value }}</p>
+    <p class="mb-0 text-muted">{{ m.causale }}</p>
+  </div>
+</div>
+<form method="post" class="card border-0 shadow-sm p-3">
+  {{ form.hidden_tag() }}
+  {{ form.note.label(class="form-label") }}
+  {{ form.note(class="form-control", rows=3) }}
+  <div class="mt-3 d-flex gap-2">
+    {{ form.submit(class="btn btn-danger") }}
+    <a class="btn btn-outline-secondary" href="{{ url_for('movimenti.lista', anno=m.anno) }}">Indietro</a>
+  </div>
+</form>
+{% endblock %}

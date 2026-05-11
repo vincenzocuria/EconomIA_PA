@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Allegati — EconomIA_PA{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0">Allegati e scansioni</h1>
+  <form class="d-flex align-items-center gap-2" method="get">
+    <input type="number" class="form-control form-control-sm" name="anno" value="{{ anno }}" style="width:6rem">
+    <button class="btn btn-sm btn-outline-secondary" type="submit">Anno</button>
+  </form>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Carica file</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('allegati.carica') }}" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="anno" value="{{ anno }}">
+          {{ form.tipo_documento.label(class="form-label") }}
+          {{ form.tipo_documento(class="form-select mb-2") }}
+          {{ form.movimento_id.label(class="form-label") }}
+          {{ form.movimento_id(class="form-select mb-2") }}
+          {{ form.buono_id.label(class="form-label") }}
+          {{ form.buono_id(class="form-select mb-2") }}
+          <div class="form-check mb-2">
+            {{ form.is_principale(class="form-check-input") }}
+            {{ form.is_principale.label(class="form-check-label") }}
+          </div>
+          <div class="form-check mb-3">
+            {{ form.comprimi(class="form-check-input") }}
+            {{ form.comprimi.label(class="form-check-label") }}
+          </div>
+          {{ form.file.label(class="form-label") }}
+          {{ form.file(class="form-control mb-3") }}
+          {{ form.submit(class="btn btn-primary") }}
+        </form>
+        <p class="small text-muted mt-3 mb-0">Formati: PDF, JPG, PNG, WEBP. Hash SHA-256 calcolato automaticamente.</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Elenco (ultimi 200)</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead class="table-light"><tr><th>Data</th><th>Tipo</th><th>File</th><th>SHA-256</th><th></th></tr></thead>
+          <tbody>
+            {% for a in rows %}
+            <tr>
+              <td class="text-nowrap">{{ a.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+              <td>{{ a.tipo_documento.value }}</td>
+              <td class="text-truncate" style="max-width:10rem">{{ a.original_name }}</td>
+              <td class="small text-truncate" style="max-width:8rem" title="{{ a.sha256 }}">{{ a.sha256[:12] }}…</td>
+              <td class="text-end text-nowrap">
+                <a class="btn btn-sm btn-outline-primary" target="_blank" href="{{ url_for('allegati.file_', id=a.id) }}">Apri</a>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('allegati.file_', id=a.id, download=1) }}">Scarica</a>
+                {% if a.filename_stored.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')) %}
+                <form class="d-inline" method="post" action="{{ url_for('allegati.ruota', id=a.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm btn-outline-secondary">Ruota</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="p-4 text-muted">Nessun allegato per i filtri correnti.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ titolo }} — EconomIA_PA{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">{{ titolo }}</h1>
+<form method="post" class="card border-0 shadow-sm p-3 p-md-4">
+  {{ form.hidden_tag() }}
+  <div class="row g-3">
+    <div class="col-md-4">{{ form.data_buono.label(class="form-label") }}{{ form.data_buono(class="form-control") }}</div>
+    <div class="col-md-4">{{ form.stato.label(class="form-label") }}{{ form.stato(class="form-select") }}</div>
+    <div class="col-md-4">{{ form.importo_autorizzato.label(class="form-label") }}{{ form.importo_autorizzato(class="form-control") }}</div>
+    <div class="col-md-4">{{ form.importo_speso.label(class="form-label") }}{{ form.importo_speso(class="form-control") }}</div>
+    <div class="col-md-8">{{ form.beneficiario.label(class="form-label") }}{{ form.beneficiario(class="form-control") }}</div>
+    <div class="col-md-6">{{ form.richiedente.label(class="form-label") }}{{ form.richiedente(class="form-control") }}</div>
+    <div class="col-md-6">{{ form.ufficio_richiedente.label(class="form-label") }}{{ form.ufficio_richiedente(class="form-control") }}</div>
+    <div class="col-12">{{ form.causale.label(class="form-label") }}{{ form.causale(class="form-control", rows=3) }}</div>
+    <div class="col-12">{{ form.note.label(class="form-label") }}{{ form.note(class="form-control", rows=2) }}</div>
+  </div>
+  <div class="mt-4 d-flex gap-2">
+    {{ form.submit(class="btn btn-primary") }}
+    <a class="btn btn-outline-secondary" href="{{ url_for('buoni.lista', anno=anno) }}">Annulla</a>
+    {% if b %}
+    <a class="btn btn-outline-primary" href="{{ url_for('buoni.pdf', id=b.id) }}">Scarica PDF</a>
+    {% endif %}
+  </div>
+</form>
+{% endblock %}

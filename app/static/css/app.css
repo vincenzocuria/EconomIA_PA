@@ -1,0 +1,16 @@
+:root {
+  --eg-header: #0f172a;
+}
+[data-bs-theme="dark"] {
+  --eg-header: #020617;
+}
+body {
+  font-feature-settings: "tnum" 1;
+}
+.navbar-brand {
+  letter-spacing: 0.02em;
+}
+.table-sm td,
+.table-sm th {
+  vertical-align: middle;
+}

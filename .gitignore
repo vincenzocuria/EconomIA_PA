@@ -1,0 +1,39 @@
+# Ambiente e segreti
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Flask / istanza locale
+instance/
+*.sqlite3
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Test / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# IDE e OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Log
+*.log
