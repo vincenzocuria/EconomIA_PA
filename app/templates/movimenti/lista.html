@@ -22,8 +22,8 @@
       {% for m in rows %}
       <tr>
         <td>{{ '%04d'|format(m.numero_progressivo) }}</td>
-        <td>{{ m.data_movimento.strftime('%d/%m/%Y') }}</td>
-        <td>{{ m.tipo.value }}</td>
+        <td>{{ m|data_ora_cassa }}</td>
+        <td>{{ m|tipo_mov_label }}</td>
         <td>{{ m.importo|eur }}</td>
         <td>{{ m.stato.value }}</td>
         <td>{{ m.trimestre }}</td>

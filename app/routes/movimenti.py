@@ -6,8 +6,11 @@ from flask_login import current_user, login_required
 from app.extensions import db
 from app.forms.movimento_form import MovimentoForm, StornoForm
 from app.models.buono import BuonoEconomale
+from app.models.filiale_banca import FilialeBanca
 from app.models.movimento import Movimento, StatoMovimento, TipoMovimento, trimestre_da_data
 from app.services.audit_log import scrivi_audit
+from app.services.filiali_scelte import scelte_filiale_per_movimento
+from app.services.movimento_tipi import scelte_tipo_movimento
 from app.services.progressivi import prossimo_numero_movimento
 
 bp = Blueprint("movimenti", __name__, url_prefix="/movimenti")
@@ -22,8 +25,10 @@ def _buoni_scelte(anno: int):
 
 def _popola_form_movimento(form: MovimentoForm, anno: int, m: Movimento | None = None):
     form.buono_id.choices = _buoni_scelte(anno)
+    form.filiale_id.choices = scelte_filiale_per_movimento(m)
     if m:
         form.data_movimento.data = m.data_movimento
+        form.ora_movimento.data = m.ora_movimento
         form.tipo.data = m.tipo.value
         form.importo.data = m.importo
         form.causale.data = m.causale
@@ -33,6 +38,8 @@ def _popola_form_movimento(form: MovimentoForm, anno: int, m: Movimento | None =
         form.num_documento_fiscale.data = m.num_documento_fiscale
         form.data_documento_fiscale.data = m.data_documento_fiscale
         form.modalita_pagamento.data = m.modalita_pagamento
+        form.filiale_id.data = m.filiale_id or 0
+        form.rif_ricevuta.data = m.rif_ricevuta or ""
         form.capitolo_riferimento.data = m.capitolo_riferimento
         form.note.data = m.note
         form.stato.data = m.stato.value
@@ -43,6 +50,7 @@ def _movimento_da_form(form: MovimentoForm, anno: int, numero: int, m: Movimento
         m = Movimento(anno=anno, numero_progressivo=numero)
         m.created_by_id = current_user.id
     m.data_movimento = form.data_movimento.data
+    m.ora_movimento = form.ora_movimento.data
     m.tipo = TipoMovimento(form.tipo.data)
     m.importo = form.importo.data
     m.causale = form.causale.data or ""
@@ -53,6 +61,11 @@ def _movimento_da_form(form: MovimentoForm, anno: int, numero: int, m: Movimento
     m.num_documento_fiscale = form.num_documento_fiscale.data or ""
     m.data_documento_fiscale = form.data_documento_fiscale.data
     m.modalita_pagamento = form.modalita_pagamento.data or ""
+    fid = form.filiale_id.data
+    m.filiale_id = fid if fid else None
+    if m.filiale_id:
+        m.filiale_banca = ""
+    m.rif_ricevuta = form.rif_ricevuta.data or ""
     m.capitolo_riferimento = form.capitolo_riferimento.data or ""
     m.note = form.note.data or ""
     m.stato = StatoMovimento(form.stato.data)
@@ -73,9 +86,18 @@ def lista():
 def nuovo():
     anno = int(request.args.get("anno", date.today().year))
     form = MovimentoForm()
+    form.tipo.choices = scelte_tipo_movimento()
     form.buono_id.choices = _buoni_scelte(anno)
+    form.filiale_id.choices = scelte_filiale_per_movimento(None)
     if request.method == "GET":
         form.stato.data = StatoMovimento.registrato.value
+        sole = (
+            FilialeBanca.query.filter_by(attiva=True)
+            .order_by(FilialeBanca.ordinamento, FilialeBanca.denominazione)
+            .all()
+        )
+        if len(sole) == 1:
+            form.filiale_id.data = sole[0].id
     if form.validate_on_submit():
         num = prossimo_numero_movimento(anno)
         m = _movimento_da_form(form, anno, num, None)
@@ -95,7 +117,9 @@ def modifica(id: int):
         flash("Movimento stornato: non modificabile.", "warning")
         return redirect(url_for("movimenti.lista", anno=m.anno))
     form = MovimentoForm()
+    form.tipo.choices = scelte_tipo_movimento()
     form.buono_id.choices = _buoni_scelte(m.anno)
+    form.filiale_id.choices = scelte_filiale_per_movimento(m)
     if request.method == "GET":
         _popola_form_movimento(form, m.anno, m)
     if form.validate_on_submit():
@@ -131,6 +155,8 @@ def storno(id: int):
             importo=orig.importo,
             causale=f"Storno mov. {orig.numero_progressivo:04d}/{orig.anno}. {form.note.data}",
             beneficiario_fornitore=orig.beneficiario_fornitore,
+            filiale_id=orig.filiale_id,
+            filiale_banca=orig.filiale_banca or "",
             stato=StatoMovimento.registrato,
             trimestre=trimestre_da_data(date.today()),
             movimento_collegato_id=orig.id,

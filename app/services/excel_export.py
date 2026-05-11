@@ -8,6 +8,7 @@ from app.models.buono import BuonoEconomale
 from app.models.cassetto import SaldoAnnuale
 from app.models.movimento import Movimento
 from app.services.cassa import effetto_su_saldo, movimenti_contabili
+from app.services.movimento_display import testo_filiale_per_movimento
 
 
 def export_movimenti_excel(anno: int) -> BytesIO:
@@ -17,6 +18,7 @@ def export_movimenti_excel(anno: int) -> BytesIO:
     headers = [
         "N.",
         "Data",
+        "Ora",
         "Tipo",
         "Importo",
         "Causale",
@@ -25,6 +27,8 @@ def export_movimenti_excel(anno: int) -> BytesIO:
         "Doc. fiscale",
         "Data doc.",
         "Pagamento",
+        "Filiale banca",
+        "Rif. ricevuta",
         "Capitolo",
         "Stato",
         "Trimestre",
@@ -38,18 +42,21 @@ def export_movimenti_excel(anno: int) -> BytesIO:
     for m in rows:
         ws.cell(row=r, column=1, value=m.numero_progressivo)
         ws.cell(row=r, column=2, value=m.data_movimento)
-        ws.cell(row=r, column=3, value=m.tipo.value if hasattr(m.tipo, "value") else str(m.tipo))
-        ws.cell(row=r, column=4, value=float(m.importo))
-        ws.cell(row=r, column=5, value=m.causale)
-        ws.cell(row=r, column=6, value=m.beneficiario_fornitore)
-        ws.cell(row=r, column=7, value=m.cf_piva)
-        ws.cell(row=r, column=8, value=m.num_documento_fiscale)
-        ws.cell(row=r, column=9, value=m.data_documento_fiscale)
-        ws.cell(row=r, column=10, value=m.modalita_pagamento)
-        ws.cell(row=r, column=11, value=m.capitolo_riferimento)
-        ws.cell(row=r, column=12, value=m.stato.value if hasattr(m.stato, "value") else str(m.stato))
-        ws.cell(row=r, column=13, value=m.trimestre)
-        ws.cell(row=r, column=14, value=m.buono_id)
+        ws.cell(row=r, column=3, value=m.ora_movimento.strftime("%H:%M") if m.ora_movimento else "")
+        ws.cell(row=r, column=4, value=m.tipo.value if hasattr(m.tipo, "value") else str(m.tipo))
+        ws.cell(row=r, column=5, value=float(m.importo))
+        ws.cell(row=r, column=6, value=m.causale)
+        ws.cell(row=r, column=7, value=m.beneficiario_fornitore)
+        ws.cell(row=r, column=8, value=m.cf_piva)
+        ws.cell(row=r, column=9, value=m.num_documento_fiscale)
+        ws.cell(row=r, column=10, value=m.data_documento_fiscale)
+        ws.cell(row=r, column=11, value=m.modalita_pagamento)
+        ws.cell(row=r, column=12, value=testo_filiale_per_movimento(m))
+        ws.cell(row=r, column=13, value=getattr(m, "rif_ricevuta", "") or "")
+        ws.cell(row=r, column=14, value=m.capitolo_riferimento)
+        ws.cell(row=r, column=15, value=m.stato.value if hasattr(m.stato, "value") else str(m.stato))
+        ws.cell(row=r, column=16, value=m.trimestre)
+        ws.cell(row=r, column=17, value=m.buono_id)
         r += 1
     bio = BytesIO()
     wb.save(bio)

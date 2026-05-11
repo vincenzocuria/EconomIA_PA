@@ -4,6 +4,7 @@ from pathlib import Path
 from flask import Flask
 
 from app.config import INSTANCE_DIR, config_by_name
+from app.debug_log import configure_dev_debug_logging, dlog
 from app.extensions import csrf, db, login_manager, migrate
 
 
@@ -44,6 +45,18 @@ def create_app(config_name: str | None = None) -> Flask:
         except (TypeError, ValueError):
             return "€ —"
 
+    @app.template_filter("data_ora_cassa")
+    def _data_ora_cassa(m):
+        from app.services.movimento_display import formato_data_ora
+
+        return formato_data_ora(m)
+
+    @app.template_filter("tipo_mov_label")
+    def _tipo_mov_label(m):
+        from app.services.movimento_tipi import TIPO_MOVIMENTO_LABELS
+
+        return TIPO_MOVIMENTO_LABELS.get(m.tipo, m.tipo.value)
+
     from app.routes.auth import bp as auth_bp
     from app.routes.main import bp as main_bp
     from app.routes.movimenti import bp as movimenti_bp
@@ -51,6 +64,7 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes.allegati import bp as allegati_bp
     from app.routes.impostazioni import bp as impostazioni_bp
     from app.routes.backup_export import bp as backup_export_bp
+    from app.routes.filiali_banca import bp as filiali_banca_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -59,23 +73,82 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(allegati_bp)
     app.register_blueprint(impostazioni_bp)
     app.register_blueprint(backup_export_bp)
+    app.register_blueprint(filiali_banca_bp)
+
+    configure_dev_debug_logging(app)
 
     with app.app_context():
         db.create_all()
+        from app.services.schema_filiale import applica_schema_filiale_banca
+        from app.services.schema_movimento import applica_patch_movimento
+
+        applica_patch_movimento()
+        applica_schema_filiale_banca()
         _ensure_default_user(app)
         _ensure_settings_rows()
 
     return app
 
 
+def _env_flag_true(name: str) -> bool:
+    v = os.environ.get(name, "").strip().lower()
+    return v in ("1", "true", "yes", "on")
+
+
 def _ensure_default_user(app: Flask) -> None:
     from app.models.user import User
     from werkzeug.security import generate_password_hash
 
-    if User.query.count() > 0:
-        return
     username = os.environ.get("ECONOMIA_PA_ADMIN_USER", "economo")
     password = os.environ.get("ECONOMIA_PA_ADMIN_PASSWORD")
+    n = User.query.count()
+
+    dlog(
+        app,
+        "bootstrap utenti: count=%s env_user=%r password_env_set=%s sync_flag=%s",
+        n,
+        username,
+        bool(password),
+        _env_flag_true("ECONOMIA_PA_ADMIN_SYNC"),
+    )
+
+    if n > 0:
+        # ECONOMIA_PA_* vale solo alla prima creazione; per allineare un DB già
+        # esistente imposta ECONOMIA_PA_ADMIN_SYNC=1 (una volta) con password nel .env.
+        if n == 1 and _env_flag_true("ECONOMIA_PA_ADMIN_SYNC") and password:
+            u = User.query.first()
+            dlog(app, "bootstrap: sync admin id=%s vecchio_username=%r", u.id, u.username)
+            u.username = username.strip()
+            u.password_hash = generate_password_hash(password)
+            db.session.commit()
+            app.logger.warning(
+                "ECONOMIA_PA_ADMIN_SYNC: credenziali aggiornate dal .env. "
+                "Rimuovi ECONOMIA_PA_ADMIN_SYNC dopo l'uso."
+            )
+        else:
+            if n == 1:
+                u = User.query.first()
+                want = username.strip()
+                if u.username != want:
+                    dlog(
+                        app,
+                        "bootstrap: nel DB username=%r, nel .env ECONOMIA_PA_ADMIN_USER=%r → "
+                        "il login con %r fallisce. Aggiungi ECONOMIA_PA_ADMIN_SYNC=1 (e password nel .env), "
+                        "riavvia una volta, poi rimuovi il flag.",
+                        u.username,
+                        want,
+                        want,
+                    )
+                else:
+                    dlog(
+                        app,
+                        "bootstrap: utente n=1 username=%r coincide col .env (password DB non aggiornata da env senza SYNC)",
+                        u.username,
+                    )
+            else:
+                dlog(app, "bootstrap: utente esistente, nessuna creazione/sync (n=%s)", n)
+        return
+
     if not password:
         password = "economo"
         app.logger.warning(
@@ -83,12 +156,13 @@ def _ensure_default_user(app: Flask) -> None:
             "Imposta ECONOMIA_PA_ADMIN_PASSWORD e riavvia."
         )
     u = User(
-        username=username,
+        username=username.strip(),
         password_hash=generate_password_hash(password),
         is_active=True,
     )
     db.session.add(u)
     db.session.commit()
+    dlog(app, "bootstrap: creato utente iniziale username=%r id=%s", u.username, u.id)
 
 
 def _ensure_settings_rows() -> None:

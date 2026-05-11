@@ -19,6 +19,8 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    # HTTP locale: evita controlli referrer HTTPS che possono confondere proxy/dev
+    WTF_CSRF_SSL_STRICT = False
     SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL") or (
         "sqlite:///" + str(INSTANCE_DIR / "economia_pa.sqlite3")
     )

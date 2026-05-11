@@ -11,9 +11,9 @@ def _dec(v) -> Decimal:
 def effetto_su_saldo(m: Movimento) -> Decimal:
     v = _dec(m.importo)
     t = m.tipo
-    if t in (TipoMovimento.entrata, TipoMovimento.reintegro):
+    if t in (TipoMovimento.entrata, TipoMovimento.reintegro, TipoMovimento.prelievo_banca):
         return v
-    if t == TipoMovimento.uscita:
+    if t in (TipoMovimento.uscita, TipoMovimento.versamento_banca):
         return -v
     return v
 
@@ -31,14 +31,22 @@ def movimenti_contabili(anno: int):
 
 def totale_entrate(anno: int) -> Decimal:
     return sum(
-        (_dec(m.importo) for m in movimenti_contabili(anno) if m.tipo in (TipoMovimento.entrata, TipoMovimento.reintegro)),
+        (
+            _dec(m.importo)
+            for m in movimenti_contabili(anno)
+            if m.tipo in (TipoMovimento.entrata, TipoMovimento.reintegro, TipoMovimento.prelievo_banca)
+        ),
         start=Decimal("0"),
     )
 
 
 def totale_uscite(anno: int) -> Decimal:
     return sum(
-        (_dec(m.importo) for m in movimenti_contabili(anno) if m.tipo == TipoMovimento.uscita),
+        (
+            _dec(m.importo)
+            for m in movimenti_contabili(anno)
+            if m.tipo in (TipoMovimento.uscita, TipoMovimento.versamento_banca)
+        ),
         start=Decimal("0"),
     )
 

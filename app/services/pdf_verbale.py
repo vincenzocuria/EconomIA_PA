@@ -12,6 +12,8 @@ from app.extensions import db
 from app.models.movimento import Movimento, StatoMovimento, TipoMovimento
 from app.models.verbale import VerbaleTrimestrale
 from app.services.cassa import effetto_su_saldo
+from app.services.movimento_display import dettaglio_banca_breve
+from app.services.movimento_tipi import TIPO_MOVIMENTO_LABELS
 from app.services.pdf_base import disclaimer_registro, intestazione_flowables
 
 
@@ -49,25 +51,26 @@ def genera_verbale_trimestrale_pdf(anno: int, trimestre: int) -> Path:
         .order_by(Movimento.numero_progressivo)
         .all()
     )
-    rows = [["N.", "Data", "Tipo", "Importo", "Causale", "Beneficiario"]]
+    rows = [["N.", "Data", "Tipo", "Importo", "Causale", "Beneficiario", "Banca / ora"]]
     tot = Decimal("0")
     for m in movs:
         eff = effetto_su_saldo(m)
         tot += eff
-        tipo_v = m.tipo.value if hasattr(m.tipo, "value") else str(m.tipo)
+        tipo_v = TIPO_MOVIMENTO_LABELS.get(m.tipo, m.tipo.value if hasattr(m.tipo, "value") else str(m.tipo))
         rows.append(
             [
                 f"{m.numero_progressivo:04d}",
                 m.data_movimento.isoformat(),
                 tipo_v,
                 f"{eff:,.2f}",
-                (m.causale or "")[:60],
-                (m.beneficiario_fornitore or "")[:40],
+                (m.causale or "")[:55],
+                (m.beneficiario_fornitore or "")[:35],
+                dettaglio_banca_breve(m)[:42],
             ]
         )
-    rows.append(["", "", "Saldo movimenti trim.", f"{tot:,.2f}", "", ""])
+    rows.append(["", "", "Saldo movimenti trim.", f"{tot:,.2f}", "", "", ""])
 
-    t = Table(rows, colWidths=[1.2 * cm, 2.2 * cm, 2.2 * cm, 2.5 * cm, 5 * cm, 3 * cm])
+    t = Table(rows, colWidths=[1.1 * cm, 2 * cm, 2 * cm, 2.2 * cm, 4.2 * cm, 2.5 * cm, 2.5 * cm])
     t.setStyle(
         TableStyle(
             [

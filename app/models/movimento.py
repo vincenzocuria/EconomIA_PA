@@ -8,6 +8,8 @@ class TipoMovimento(str, enum.Enum):
     entrata = "entrata"
     uscita = "uscita"
     reintegro = "reintegro"
+    prelievo_banca = "prelievo_banca"
+    versamento_banca = "versamento_banca"
     rettifica = "rettifica"
     storno = "storno"
 
@@ -30,6 +32,7 @@ class Movimento(db.Model):
     anno = db.Column(db.Integer, nullable=False, index=True)
     numero_progressivo = db.Column(db.Integer, nullable=False)
     data_movimento = db.Column(db.Date, nullable=False, index=True)
+    ora_movimento = db.Column(db.Time, nullable=True)
     tipo = db.Column(db.Enum(TipoMovimento), nullable=False)
     importo = db.Column(db.Numeric(12, 2), nullable=False)
     causale = db.Column(db.Text, default="")
@@ -39,6 +42,9 @@ class Movimento(db.Model):
     num_documento_fiscale = db.Column(db.String(120), default="")
     data_documento_fiscale = db.Column(db.Date, nullable=True)
     modalita_pagamento = db.Column(db.String(120), default="")
+    filiale_id = db.Column(db.Integer, db.ForeignKey("filiale_banca.id"), nullable=True)
+    filiale_banca = db.Column(db.String(200), default="")
+    rif_ricevuta = db.Column(db.String(120), default="")
     capitolo_riferimento = db.Column(db.String(200), default="")
     note = db.Column(db.Text, default="")
     stato = db.Column(db.Enum(StatoMovimento), nullable=False, default=StatoMovimento.registrato)
@@ -59,6 +65,12 @@ class Movimento(db.Model):
         foreign_keys=[movimento_collegato_id],
     )
     creato_da = db.relationship("User", foreign_keys=[created_by_id])
+    filiale = db.relationship(
+        "FilialeBanca",
+        foreign_keys=[filiale_id],
+        backref=db.backref("movimenti", lazy="dynamic"),
+        lazy="joined",
+    )
 
     __table_args__ = (
         db.UniqueConstraint("anno", "numero_progressivo", name="uq_movimento_anno_num"),

@@ -35,7 +35,7 @@
   <div class="col-md-3 col-6">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body">
-        <div class="text-muted small">Entrate / reintegri</div>
+        <div class="text-muted small">Entrate / reintegri / prelievi</div>
         <div class="fs-6 fw-semibold text-success">{{ tot_entrate|eur }}</div>
       </div>
     </div>
@@ -43,7 +43,7 @@
   <div class="col-md-3 col-6">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body">
-        <div class="text-muted small">Uscite</div>
+        <div class="text-muted small">Uscite / versamenti</div>
         <div class="fs-6 fw-semibold text-danger">{{ tot_uscite|eur }}</div>
       </div>
     </div>
@@ -100,8 +100,8 @@
         {% for m in movimenti_recenti %}
         <tr>
           <td>{{ '%04d'|format(m.numero_progressivo) }}</td>
-          <td>{{ m.data_movimento.strftime('%d/%m/%Y') }}</td>
-          <td>{{ m.tipo.value }}</td>
+          <td>{{ m|data_ora_cassa }}</td>
+          <td>{{ m|tipo_mov_label }}</td>
           <td>{{ m.importo|eur }}</td>
           <td class="text-truncate" style="max-width:14rem">{{ m.causale }}</td>
         </tr>

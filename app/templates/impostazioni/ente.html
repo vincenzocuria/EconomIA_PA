@@ -19,7 +19,17 @@
     <div class="col-12">{{ form.note_legali.label(class="form-label") }}{{ form.note_legali(class="form-control", rows=3) }}</div>
     <div class="col-12">{{ form.logo.label(class="form-label") }}{{ form.logo(class="form-control") }}</div>
     {% if row.logo_path %}
-    <div class="col-12 small text-muted">Logo corrente: {{ row.logo_path }}</div>
+    <div class="col-12">
+      <p class="form-label mb-1">Anteprima logo</p>
+      <p class="small text-muted mb-2">
+        Anteprima a schermo; nei PDF il logo viene ridimensionato a circa <strong>3×2 cm</strong> (proporzioni conservate).
+        Se qui è nitido e leggibile, di solito va bene anche in stampa.
+      </p>
+      <div class="border rounded p-2 bg-white d-inline-block">
+        <img src="{{ url_for('impostazioni.logo_preview') }}" alt="Logo ente" class="d-block" style="max-height: 140px; max-width: min(100%, 320px); object-fit: contain;">
+      </div>
+      <div class="small text-muted mt-2">File: {{ row.logo_path }} — <a href="{{ url_for('impostazioni.logo_preview') }}" target="_blank" rel="noopener">Apri in nuova scheda</a></div>
+    </div>
     {% endif %}
   </div>
   <div class="mt-4">{{ form.submit(class="btn btn-primary") }}</div>

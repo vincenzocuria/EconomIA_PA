@@ -55,6 +55,20 @@ def raccogli_alert(anno: int) -> list[dict]:
                     "testo": f"Movimento {m.numero_progressivo:04d} in uscita senza allegato.",
                 }
             )
+        if m.tipo == TipoMovimento.versamento_banca and m.allegati.count() == 0:
+            out.append(
+                {
+                    "livello": "warning",
+                    "testo": f"Movimento {m.numero_progressivo:04d} versamento in banca senza allegato (ricevuta).",
+                }
+            )
+        if m.tipo == TipoMovimento.prelievo_banca and m.allegati.count() == 0:
+            out.append(
+                {
+                    "livello": "warning",
+                    "testo": f"Movimento {m.numero_progressivo:04d} prelievo banca senza allegato (ricevuta).",
+                }
+            )
         if m.tipo in (TipoMovimento.uscita, TipoMovimento.entrata):
             if not (m.num_documento_fiscale or "").strip() and m.tipo == TipoMovimento.uscita:
                 out.append(
