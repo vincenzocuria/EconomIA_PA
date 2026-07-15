@@ -56,6 +56,12 @@ def create_app(config_name: str | None = None) -> Flask:
 
         return TIPO_MOVIMENTO_LABELS.get(m.tipo, m.tipo.value)
 
+    @app.template_filter("tipo_allegato_label")
+    def _tipo_allegato_label(a):
+        from app.services.allegato_tipi import TIPO_ALLEGATO_LABELS
+
+        return TIPO_ALLEGATO_LABELS.get(a.tipo_documento, a.tipo_documento.value)
+
     from app.routes.auth import bp as auth_bp
     from app.routes.main import bp as main_bp
     from app.routes.movimenti import bp as movimenti_bp
@@ -76,11 +82,13 @@ def create_app(config_name: str | None = None) -> Flask:
 
     with app.app_context():
         db.create_all()
+        from app.services.schema_allegato import applica_schema_allegato
         from app.services.schema_filiale import applica_schema_filiale_banca
         from app.services.schema_movimento import applica_patch_movimento
 
         applica_patch_movimento()
         applica_schema_filiale_banca()
+        applica_schema_allegato()
         _ensure_default_user(app)
         _ensure_settings_rows()
 

@@ -10,7 +10,7 @@ from werkzeug.utils import secure_filename
 from app.config import INSTANCE_DIR
 from app.extensions import db
 from app.forms.allegato_form import AllegatoForm
-from app.models.allegato import Allegato
+from app.models.allegato import Allegato, TipoAllegato
 from app.models.buono import BuonoEconomale
 from app.models.movimento import Movimento
 from app.services.audit_log import scrivi_audit
@@ -19,6 +19,7 @@ from app.services.upload_allegato import (
     estensione_consentita,
     mime_consentito_per_estensione,
     nome_file_allegato,
+    nome_file_estratto_conto,
     salva_upload,
 )
 
@@ -46,7 +47,13 @@ def lista():
     rows = (
         Allegato.query.outerjoin(Movimento, Allegato.movimento_id == Movimento.id)
         .outerjoin(BuonoEconomale, Allegato.buono_id == BuonoEconomale.id)
-        .filter(or_(Movimento.anno == anno, BuonoEconomale.anno == anno))
+        .filter(
+            or_(
+                Movimento.anno == anno,
+                BuonoEconomale.anno == anno,
+                Allegato.anno == anno,
+            )
+        )
         .order_by(Allegato.created_at.desc())
         .limit(200)
         .all()
@@ -79,19 +86,23 @@ def carica():
     if not mime_consentito_per_estensione(mime, ext):
         flash("MIME non coerente con l'estensione.", "danger")
         return redirect(url_for("allegati.lista", anno=anno))
-    mid = form.movimento_id.data
-    bid = form.buono_id.data
-    if not mid and not bid:
+    mid = form.movimento_id.data or 0
+    bid = form.buono_id.data or 0
+    tipo = form.tipo_documento.data
+    if tipo != TipoAllegato.estratto_conto and not mid and not bid:
         flash("Collegare almeno un movimento o un buono.", "warning")
         return redirect(url_for("allegati.lista", anno=anno))
     m = Movimento.query.get(mid) if mid else None
     b = BuonoEconomale.query.get(bid) if bid else None
     data_doc = date.today()
-    prefisso = "MOV" if m else "BUO"
-    num = m.numero_progressivo if m else (b.numero_progressivo if b else 0)
-    ben = (m.beneficiario_fornitore if m else (b.beneficiario if b else "")) or ""
-    imp = str(m.importo if m else (b.importo_speso if b else 0))
-    nome = nome_file_allegato(data_doc, prefisso, num, form.tipo_documento.data, ben, imp, ext)
+    if m or b:
+        prefisso = "MOV" if m else "BUO"
+        num = m.numero_progressivo if m else b.numero_progressivo
+        ben = (m.beneficiario_fornitore if m else (b.beneficiario if b else "")) or ""
+        imp = str(m.importo if m else (b.importo_speso if b else 0))
+        nome = nome_file_allegato(data_doc, prefisso, num, tipo, ben, imp, ext)
+    else:
+        nome = nome_file_estratto_conto(data_doc, anno, ext)
     dest = INSTANCE_DIR / "uploads" / str(anno)
     path, digest = salva_upload(f, dest, nome)
     if form.comprimi.data and ext in ("jpg", "jpeg", "png", "webp"):
@@ -113,9 +124,10 @@ def carica():
         original_name=secure_filename(f.filename),
         mime_type=mime_finale,
         sha256=digest,
-        tipo_documento=form.tipo_documento.data,
+        tipo_documento=tipo,
         movimento_id=mid or None,
         buono_id=bid or None,
+        anno=anno,
         is_principale=bool(form.is_principale.data),
     )
     db.session.add(row)

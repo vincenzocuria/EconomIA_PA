@@ -54,6 +54,10 @@ def nome_file_allegato(
     return f"{d}_{prefisso}-{num_prog:04d}_{tipo_s}_{ben}-{imp}.{ext}"
 
 
+def nome_file_estratto_conto(data_doc: date, anno: int, ext: str) -> str:
+    return f"{data_doc.isoformat()}_EST-{anno}_estratto_conto.{ext}"
+
+
 def salva_upload(
     file: FileStorage,
     dest_dir: Path,

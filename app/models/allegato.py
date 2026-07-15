@@ -11,6 +11,7 @@ class TipoAllegato(str, enum.Enum):
     autorizzazione = "autorizzazione"
     determina = "determina"
     verbale = "verbale"
+    estratto_conto = "estratto_conto"
     altro = "altro"
 
 
@@ -25,6 +26,7 @@ class Allegato(db.Model):
     tipo_documento = db.Column(db.Enum(TipoAllegato), nullable=False, default=TipoAllegato.altro)
     movimento_id = db.Column(db.Integer, db.ForeignKey("movimento.id"), nullable=True)
     buono_id = db.Column(db.Integer, db.ForeignKey("buono_economale.id"), nullable=True)
+    anno = db.Column(db.Integer, nullable=True, index=True)
     is_principale = db.Column(db.Boolean, default=False, nullable=False)
     created_at = db.Column(db.DateTime, server_default=db.func.now())
 

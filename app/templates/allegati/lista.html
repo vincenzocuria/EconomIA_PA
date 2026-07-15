@@ -14,15 +14,20 @@
     <div class="card border-0 shadow-sm">
       <div class="card-header bg-white fw-semibold">Carica file</div>
       <div class="card-body">
-        <form method="post" action="{{ url_for('allegati.carica') }}" enctype="multipart/form-data">
+        <form id="form-allegato" method="post" action="{{ url_for('allegati.carica') }}" enctype="multipart/form-data">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="anno" value="{{ anno }}">
           {{ form.tipo_documento.label(class="form-label") }}
-          {{ form.tipo_documento(class="form-select mb-2") }}
-          {{ form.movimento_id.label(class="form-label") }}
-          {{ form.movimento_id(class="form-select mb-2") }}
-          {{ form.buono_id.label(class="form-label") }}
-          {{ form.buono_id(class="form-select mb-2") }}
+          {{ form.tipo_documento(class="form-select mb-2", id="tipo_documento") }}
+          <div id="campi-collegamento">
+            {{ form.movimento_id.label(class="form-label") }}
+            {{ form.movimento_id(class="form-select mb-2") }}
+            {{ form.buono_id.label(class="form-label") }}
+            {{ form.buono_id(class="form-select mb-2") }}
+          </div>
+          <p id="hint-estratto-conto" class="small text-info mb-2 d-none">
+            Estratto conto: movimento e buono non obbligatori; vale l'anno selezionato ({{ anno }}).
+          </p>
           <div class="form-check mb-2">
             {{ form.is_principale(class="form-check-input") }}
             {{ form.is_principale.label(class="form-check-label") }}
@@ -49,7 +54,12 @@
             {% for a in rows %}
             <tr>
               <td class="text-nowrap">{{ a.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-              <td>{{ a.tipo_documento.value }}</td>
+              <td>
+                {{ a|tipo_allegato_label }}
+                {% if not a.movimento_id and not a.buono_id %}
+                <span class="badge text-bg-secondary">Anno {{ a.anno or anno }}</span>
+                {% endif %}
+              </td>
               <td class="text-truncate" style="max-width:10rem">{{ a.original_name }}</td>
               <td class="small text-truncate" style="max-width:8rem" title="{{ a.sha256 }}">{{ a.sha256[:12] }}…</td>
               <td class="text-end text-nowrap">
@@ -72,4 +82,25 @@
     </div>
   </div>
 </div>
+<script>
+(function () {
+  var tipo = document.getElementById("tipo_documento");
+  var campi = document.getElementById("campi-collegamento");
+  var hint = document.getElementById("hint-estratto-conto");
+  if (!tipo || !campi) return;
+  function aggiorna() {
+    var est = tipo.value === "estratto_conto";
+    campi.classList.toggle("d-none", est);
+    if (hint) hint.classList.toggle("d-none", !est);
+    if (est) {
+      var mov = campi.querySelector('[name="movimento_id"]');
+      var buo = campi.querySelector('[name="buono_id"]');
+      if (mov) mov.value = "0";
+      if (buo) buo.value = "0";
+    }
+  }
+  tipo.addEventListener("change", aggiorna);
+  aggiorna();
+})();
+</script>
 {% endblock %}

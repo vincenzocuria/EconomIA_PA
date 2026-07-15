@@ -3,13 +3,13 @@ from flask_wtf.file import FileField, FileAllowed
 from wtforms import BooleanField, SelectField, SubmitField
 from wtforms.validators import DataRequired, Optional
 
-from app.models.allegato import TipoAllegato
+from app.services.allegato_tipi import scelte_tipo_allegato
 
 
 class AllegatoForm(FlaskForm):
     tipo_documento = SelectField(
         "Tipo documento",
-        choices=[(e.value, e.value) for e in TipoAllegato],
+        choices=scelte_tipo_allegato(),
         validators=[DataRequired()],
     )
     movimento_id = SelectField("Movimento", coerce=int, validators=[Optional()])
