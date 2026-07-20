@@ -32,6 +32,12 @@ def dashboard():
         .order_by(VerbaleVerifica.data_verbale.desc(), VerbaleVerifica.numero.desc())
         .first()
     )
+    ultimo_verbale_label = None
+    if ultimo_v is not None:
+        ultimo_verbale_label = (
+            f"n. {ultimo_v.numero} — T{ultimo_v.trimestre} — "
+            f"{ultimo_v.data_verbale.strftime('%d/%m/%Y')}"
+        )
     recenti = Movimento.query.filter_by(anno=anno).order_by(Movimento.created_at.desc()).limit(8).all()
     alert = raccogli_alert(anno)
     y, t = trimestre_corrente()
@@ -47,6 +53,7 @@ def dashboard():
         n_buoni=n_buoni,
         allegati_mancanti=allegati_mancanti,
         ultimo_verbale=ultimo_v,
+        ultimo_verbale_label=ultimo_verbale_label,
         prossima_scadenza=scad,
         trimestre_corrente=t if anno == y else 4,
         movimenti_recenti=recenti,
