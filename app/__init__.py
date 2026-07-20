@@ -19,6 +19,7 @@ def create_app(config_name: str | None = None) -> Flask:
     INSTANCE_DIR.mkdir(parents=True, exist_ok=True)
     (INSTANCE_DIR / "uploads").mkdir(parents=True, exist_ok=True)
     (INSTANCE_DIR / "backups").mkdir(parents=True, exist_ok=True)
+    (INSTANCE_DIR / "verbali" / "ufficiali").mkdir(parents=True, exist_ok=True)
 
     db.init_app(app)
     migrate.init_app(app, db)
@@ -70,12 +71,14 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes.impostazioni import bp as impostazioni_bp
     from app.routes.backup_export import bp as backup_export_bp
     from app.routes.filiali_banca import bp as filiali_banca_bp
+    from app.routes.verbali import bp as verbali_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(movimenti_bp)
     app.register_blueprint(buoni_bp)
     app.register_blueprint(allegati_bp)
+    app.register_blueprint(verbali_bp)
     app.register_blueprint(impostazioni_bp)
     app.register_blueprint(backup_export_bp)
     app.register_blueprint(filiali_banca_bp)
@@ -85,10 +88,12 @@ def create_app(config_name: str | None = None) -> Flask:
         from app.services.schema_allegato import applica_schema_allegato
         from app.services.schema_filiale import applica_schema_filiale_banca
         from app.services.schema_movimento import applica_patch_movimento
+        from app.services.schema_verbale_verifica import applica_schema_verbale_verifica
 
         applica_patch_movimento()
         applica_schema_filiale_banca()
         applica_schema_allegato()
+        applica_schema_verbale_verifica()
         _ensure_default_user(app)
         _ensure_settings_rows()
 

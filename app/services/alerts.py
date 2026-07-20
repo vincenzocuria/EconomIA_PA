@@ -7,6 +7,7 @@ from app.models.buono import BuonoEconomale, StatoBuono
 from app.models.cassetto import SaldoAnnuale
 from app.models.movimento import Movimento, StatoMovimento, TipoMovimento, trimestre_da_data
 from app.models.verbale import VerbaleTrimestrale
+from app.models.verbale_verifica import VerbaleVerifica
 from app.services.cassa import saldo_calcolato
 
 
@@ -91,12 +92,23 @@ def raccogli_alert(anno: int) -> list[dict]:
         oggi = date.today()
         if oggi.year == anno and t > trimestre_da_data(oggi):
             continue
-        v = VerbaleTrimestrale.query.filter_by(anno=anno, trimestre=t).first()
-        if v is None and (anno < oggi.year or (anno == oggi.year and fine_trimestre(anno, t) < oggi)):
+        trim_chiuso = anno < oggi.year or (anno == oggi.year and fine_trimestre(anno, t) < oggi)
+        if not trim_chiuso:
+            continue
+        vu = VerbaleVerifica.query.filter_by(anno=anno, trimestre=t).first()
+        if vu is None:
             out.append(
                 {
                     "livello": "warning",
-                    "testo": f"Trimestre {t} {anno} senza verbale generato.",
+                    "testo": f"Trimestre {t} {anno} senza verbale ufficiale di verifica caricato.",
+                }
+            )
+        vo = VerbaleTrimestrale.query.filter_by(anno=anno, trimestre=t).first()
+        if vo is None:
+            out.append(
+                {
+                    "livello": "secondary",
+                    "testo": f"Trimestre {t} {anno} senza riepilogo operativo generato (Strumenti).",
                 }
             )
 

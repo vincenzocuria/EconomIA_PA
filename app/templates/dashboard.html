@@ -58,8 +58,8 @@
         <li class="list-group-item d-flex justify-content-between"><span>Movimenti (anno)</span><span>{{ n_mov }}</span></li>
         <li class="list-group-item d-flex justify-content-between"><span>Buoni (anno)</span><span>{{ n_buoni }}</span></li>
         <li class="list-group-item d-flex justify-content-between"><span>Movimenti senza allegato</span><span>{{ allegati_mancanti }}</span></li>
-        <li class="list-group-item d-flex justify-content-between"><span>Ultimo verbale</span>
-          <span>{% if ultimo_verbale %}T{{ ultimo_verbale.trimestre }} — {{ ultimo_verbale.generato_il.strftime('%d/%m/%Y') }}{% else %}—{% endif %}</span>
+        <li class="list-group-item d-flex justify-content-between"><span>Ultimo verbale ufficiale</span>
+          <span>{% if ultimo_verbale %}n. {{ ultimo_verbale.numero }} — T{{ ultimo_verbale.trimestre }} — {{ ultimo_verbale.data_verbale.strftime('%d/%m/%Y') }}{% else %}—{% endif %}</span>
         </li>
         <li class="list-group-item d-flex justify-content-between"><span>Riferimento scadenza trimestre</span>
           <span>{% if prossima_scadenza %}{{ prossima_scadenza.strftime('%d/%m/%Y') }}{% else %}—{% endif %}</span>

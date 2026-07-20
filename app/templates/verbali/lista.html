@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Verbali — EconomIA_PA{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0">Verbali di verifica cassa</h1>
+  <form class="d-flex align-items-center gap-2" method="get">
+    <input type="number" class="form-control form-control-sm" name="anno" value="{{ anno }}" style="width:6rem">
+    <button class="btn btn-sm btn-outline-secondary" type="submit">Anno</button>
+  </form>
+</div>
+<p class="small text-muted mb-4">
+  Archivio dei verbali ufficiali (es. Revisore Unico). Supporto interno: non sostituisce
+  registri obbligatori né la conservazione a norma.
+</p>
+
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Carica verbale PDF</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('verbali.carica') }}" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="anno" value="{{ anno }}">
+          {{ form.numero.label(class="form-label") }}
+          {{ form.numero(class="form-control mb-2") }}
+          {{ form.data_verbale.label(class="form-label") }}
+          {{ form.data_verbale(class="form-control mb-2") }}
+          {{ form.trimestre.label(class="form-label") }}
+          {{ form.trimestre(class="form-select mb-2") }}
+          {{ form.oggetto.label(class="form-label") }}
+          {{ form.oggetto(class="form-control mb-2") }}
+          {{ form.note.label(class="form-label") }}
+          {{ form.note(class="form-control mb-2", rows="2") }}
+          {{ form.file.label(class="form-label") }}
+          {{ form.file(class="form-control mb-3", accept=".pdf,application/pdf") }}
+          {{ form.submit(class="btn btn-primary") }}
+        </form>
+        <p class="small text-muted mt-3 mb-0">
+          Un verbale ufficiale per trimestre: un nuovo caricamento sostituisce quello esistente.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Elenco {{ anno }}</div>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>N.</th>
+              <th>Data</th>
+              <th>Trim.</th>
+              <th>Oggetto</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for v in rows %}
+            <tr>
+              <td>{{ v.numero }}</td>
+              <td class="text-nowrap">{{ v.data_verbale.strftime('%d/%m/%Y') }}</td>
+              <td>T{{ v.trimestre }}</td>
+              <td class="small text-truncate" style="max-width:14rem" title="{{ v.oggetto }}">{{ v.oggetto }}</td>
+              <td class="text-end text-nowrap">
+                <a class="btn btn-sm btn-outline-primary" target="_blank" href="{{ url_for('verbali.file_', id=v.id) }}">Apri</a>
+                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('verbali.file_', id=v.id, download=1) }}">Scarica</a>
+                <form class="d-inline" method="post" action="{{ url_for('verbali.elimina', id=v.id) }}"
+                      onsubmit="return confirm('Eliminare il verbale n. {{ v.numero }} dall\'archivio?');">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Elimina</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="p-4 text-muted">Nessun verbale ufficiale per {{ anno }}.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

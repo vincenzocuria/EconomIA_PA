@@ -7,7 +7,7 @@ from flask_login import login_required
 from app.models.buono import BuonoEconomale
 from app.models.cassetto import SaldoAnnuale
 from app.models.movimento import Movimento, StatoMovimento
-from app.models.verbale import VerbaleTrimestrale
+from app.models.verbale_verifica import VerbaleVerifica
 from app.services.alerts import prossima_scadenza_verbale, raccogli_alert, trimestre_corrente, ultimo_backup
 from app.services.cassa import saldo_calcolato, totale_entrate, totale_uscite
 
@@ -28,7 +28,9 @@ def dashboard():
         if m.allegati.count() == 0:
             allegati_mancanti += 1
     ultimo_v = (
-        VerbaleTrimestrale.query.filter_by(anno=anno).order_by(VerbaleTrimestrale.generato_il.desc()).first()
+        VerbaleVerifica.query.filter_by(anno=anno)
+        .order_by(VerbaleVerifica.data_verbale.desc(), VerbaleVerifica.numero.desc())
+        .first()
     )
     recenti = Movimento.query.filter_by(anno=anno).order_by(Movimento.created_at.desc()).limit(8).all()
     alert = raccogli_alert(anno)
