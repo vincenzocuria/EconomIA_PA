@@ -38,6 +38,10 @@ def _salva_allegato_da_form(form: MovimentoForm, m: Movimento) -> None:
 bp = Blueprint("movimenti", __name__, url_prefix="/movimenti")
 
 
+def _allegati_di(m: Movimento):
+    return Allegato.query.filter_by(movimento_id=m.id).order_by(Allegato.created_at.desc()).all()
+
+
 def _buoni_scelte(anno: int):
     opts = [(0, "— Nessun buono —")]
     for b in BuonoEconomale.query.filter_by(anno=anno).order_by(BuonoEconomale.numero_progressivo):
@@ -113,6 +117,17 @@ def lista():
     )
 
 
+@bp.route("/<int:id>")
+@login_required
+def dettaglio(id: int):
+    m = Movimento.query.get_or_404(id)
+    return render_template(
+        "movimenti/dettaglio.html",
+        m=m,
+        allegati=_allegati_di(m),
+    )
+
+
 @bp.route("/nuovo", methods=["GET", "POST"])
 @login_required
 def nuovo():
@@ -167,16 +182,13 @@ def modifica(id: int):
         _salva_allegato_da_form(form, m)
         flash("Movimento aggiornato.", "success")
         return redirect(url_for("movimenti.lista", anno=m.anno))
-    allegati = (
-        Allegato.query.filter_by(movimento_id=m.id).order_by(Allegato.created_at.desc()).all()
-    )
     return render_template(
         "movimenti/modifica.html",
         form=form,
         titolo="Modifica movimento",
         anno=m.anno,
         m=m,
-        allegati=allegati,
+        allegati=_allegati_di(m),
     )
 
 

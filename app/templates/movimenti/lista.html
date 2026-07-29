@@ -29,7 +29,7 @@
     </thead>
     <tbody>
       {% for m in rows %}
-      <tr{% if m.da_giustificare %} class="table-warning"{% endif %}>
+      <tr data-href="{{ url_for('movimenti.dettaglio', id=m.id) }}" tabindex="0" role="link" aria-label="Dettaglio movimento {{ '%04d'|format(m.numero_progressivo) }}"{% if m.da_giustificare %} class="table-warning"{% endif %}>
         <td>{{ '%04d'|format(m.numero_progressivo) }}</td>
         <td>{{ m|data_ora_cassa }}</td>
         <td>{{ m|tipo_mov_label }}</td>

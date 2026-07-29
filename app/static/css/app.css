@@ -14,3 +14,9 @@ body {
 .table-sm th {
   vertical-align: middle;
 }
+tr[data-href] {
+  cursor: pointer;
+}
+tr[data-href]:hover > * {
+  --bs-table-bg-state: var(--bs-tertiary-bg);
+}

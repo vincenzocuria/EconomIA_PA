@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Movimento {{ '%04d'|format(m.numero_progressivo) }}/{{ m.anno }} — EconomIA_PA{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h4 mb-0">Movimento {{ '%04d'|format(m.numero_progressivo) }}/{{ m.anno }}</h1>
+  <div class="d-flex flex-wrap gap-2">
+    {% if m.stato.value != 'stornato' %}
+    <a class="btn btn-sm btn-primary" href="{{ url_for('movimenti.modifica', id=m.id) }}">Modifica</a>
+    <a class="btn btn-sm btn-outline-danger" href="{{ url_for('movimenti.storno', id=m.id) }}">Storno</a>
+    {% endif %}
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('movimenti.lista', anno=m.anno) }}">Registro</a>
+  </div>
+</div>
+
+{% if m.da_giustificare %}
+<div class="alert alert-warning small">Movimento da giustificare (manca ancora scontrino/ricevuta).</div>
+{% endif %}
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body">
+    <div class="row g-3 small">
+      <div class="col-md-3">
+        <div class="text-muted">Data / ora</div>
+        <div class="fw-semibold">{{ m|data_ora_cassa }}</div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-muted">Tipo</div>
+        <div class="fw-semibold">{{ m|tipo_mov_label }}</div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-muted">Importo</div>
+        <div class="fw-semibold fs-5">{{ m.importo|eur }}</div>
+      </div>
+      <div class="col-md-3">
+        <div class="text-muted">Stato</div>
+        <div class="fw-semibold">{{ m.stato.value }} · Trim. {{ m.trimestre }}</div>
+      </div>
+      <div class="col-12">
+        <div class="text-muted">Causale</div>
+        <div>{{ m.causale or '—' }}</div>
+      </div>
+      {% if m.beneficiario_fornitore %}
+      <div class="col-md-6">
+        <div class="text-muted">Beneficiario / fornitore</div>
+        <div>{{ m.beneficiario_fornitore }}</div>
+      </div>
+      {% endif %}
+      {% if m.cf_piva %}
+      <div class="col-md-6">
+        <div class="text-muted">CF / P.IVA</div>
+        <div>{{ m.cf_piva }}</div>
+      </div>
+      {% endif %}
+      {% if m.modalita_pagamento %}
+      <div class="col-md-6">
+        <div class="text-muted">Modalità pagamento</div>
+        <div>{{ m.modalita_pagamento }}</div>
+      </div>
+      {% endif %}
+      {% if m.filiale or m.filiale_banca %}
+      <div class="col-md-6">
+        <div class="text-muted">Filiale banca</div>
+        <div>{% if m.filiale %}{{ m.filiale.denominazione }}{% else %}{{ m.filiale_banca }}{% endif %}</div>
+      </div>
+      {% endif %}
+      {% if m.rif_ricevuta %}
+      <div class="col-md-6">
+        <div class="text-muted">Rif. ricevuta</div>
+        <div>{{ m.rif_ricevuta }}</div>
+      </div>
+      {% endif %}
+      {% if m.num_documento_fiscale or m.data_documento_fiscale %}
+      <div class="col-md-6">
+        <div class="text-muted">Documento fiscale</div>
+        <div>
+          {{ m.num_documento_fiscale or '—' }}
+          {% if m.data_documento_fiscale %} · {{ m.data_documento_fiscale.strftime('%d/%m/%Y') }}{% endif %}
+        </div>
+      </div>
+      {% endif %}
+      {% if m.capitolo_riferimento %}
+      <div class="col-md-6">
+        <div class="text-muted">Capitolo</div>
+        <div>{{ m.capitolo_riferimento }}</div>
+      </div>
+      {% endif %}
+      {% if m.buono %}
+      <div class="col-md-6">
+        <div class="text-muted">Buono economale</div>
+        <div>{{ '%04d'|format(m.buono.numero_progressivo) }}/{{ m.buono.anno }}</div>
+      </div>
+      {% endif %}
+      {% if m.note %}
+      <div class="col-12">
+        <div class="text-muted">Note</div>
+        <div>{{ m.note }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if allegati %}
+<div class="card border-0 shadow-sm mt-3">
+  <div class="card-header bg-white fw-semibold">Allegati</div>
+  <ul class="list-group list-group-flush small">
+    {% for a in allegati %}
+    <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+      <span>{{ a|tipo_allegato_label }} — {{ a.original_name or a.filename_stored }}</span>
+      <a class="btn btn-sm btn-outline-primary" target="_blank" href="{{ url_for('allegati.file_', id=a.id) }}">Apri</a>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}
