@@ -15,35 +15,53 @@
   Non sostituisce protocollo, contabilità ufficiale né conservazione digitale dell’ente.
 </div>
 
+<div class="row g-3 mb-3">
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small">Cassa iniziale (contanti)</div>
+        <div class="fs-5 fw-semibold">{{ saldo_cassa_iniziale|eur }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small">Cassa attuale</div>
+        <div class="fs-5 fw-semibold {% if saldo_cassa_attuale < 0 %}text-danger{% endif %}">{{ saldo_cassa_attuale|eur }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small">Conto iniziale (banca)</div>
+        <div class="fs-5 fw-semibold">{{ saldo_conto_iniziale|eur }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="text-muted small">Conto attuale</div>
+        <div class="fs-5 fw-semibold {% if saldo_conto_attuale < 0 %}text-danger{% endif %}">{{ saldo_conto_attuale|eur }}</div>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="row g-3 mb-4">
-  <div class="col-md-3 col-6">
+  <div class="col-md-6 col-6">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body">
-        <div class="text-muted small">Saldo iniziale</div>
-        <div class="fs-5 fw-semibold">{{ saldo_iniziale|eur }}</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-3 col-6">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body">
-        <div class="text-muted small">Saldo attuale</div>
-        <div class="fs-5 fw-semibold {% if saldo_attuale < 0 %}text-danger{% endif %}">{{ saldo_attuale|eur }}</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-3 col-6">
-    <div class="card border-0 shadow-sm h-100">
-      <div class="card-body">
-        <div class="text-muted small">Entrate / reintegri / prelievi</div>
+        <div class="text-muted small">Entrate / reintegri / prelievi (aumentano la cassa)</div>
         <div class="fs-6 fw-semibold text-success">{{ tot_entrate|eur }}</div>
       </div>
     </div>
   </div>
-  <div class="col-md-3 col-6">
+  <div class="col-md-6 col-6">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body">
-        <div class="text-muted small">Uscite / versamenti</div>
+        <div class="text-muted small">Uscite / versamenti (diminuiscono la cassa)</div>
         <div class="fs-6 fw-semibold text-danger">{{ tot_uscite|eur }}</div>
       </div>
     </div>
@@ -58,6 +76,16 @@
         <li class="list-group-item d-flex justify-content-between"><span>Movimenti (anno)</span><span>{{ n_mov }}</span></li>
         <li class="list-group-item d-flex justify-content-between"><span>Buoni (anno)</span><span>{{ n_buoni }}</span></li>
         <li class="list-group-item d-flex justify-content-between"><span>Movimenti senza allegato</span><span>{{ allegati_mancanti }}</span></li>
+        <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+          <span>Da giustificare</span>
+          <span>
+            {% if da_giustificare_n %}
+            <a href="{{ url_for('movimenti.lista', anno=anno, da_giustificare=1) }}" class="badge text-bg-warning text-decoration-none">{{ da_giustificare_n }}</a>
+            {% else %}
+            0
+            {% endif %}
+          </span>
+        </li>
         <li class="list-group-item d-flex justify-content-between"><span>Ultimo verbale ufficiale</span>
           <span>
             {% if ultimo_verbale_label %}

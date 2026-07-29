@@ -8,7 +8,7 @@ from app.models.cassetto import SaldoAnnuale
 from app.models.movimento import Movimento, StatoMovimento, TipoMovimento, trimestre_da_data
 from app.models.verbale import VerbaleTrimestrale
 from app.models.verbale_verifica import VerbaleVerifica
-from app.services.cassa import saldo_calcolato
+from app.services.cassa import saldo_cassa_calcolato, saldo_conto_calcolato
 
 
 def trimestre_corrente(d: date | None = None) -> tuple[int, int]:
@@ -43,12 +43,28 @@ def ultimo_backup() -> datetime | None:
 def raccogli_alert(anno: int) -> list[dict]:
     out: list[dict] = []
     saldo_row = SaldoAnnuale.query.get(anno)
-    ini = Decimal(str(saldo_row.saldo_iniziale)) if saldo_row else Decimal("0")
-    saldo = saldo_calcolato(anno, ini)
-    if saldo < 0:
+    ini_cassa = Decimal(str(saldo_row.saldo_iniziale)) if saldo_row else Decimal("0")
+    ini_conto = (
+        Decimal(str(getattr(saldo_row, "saldo_conto_iniziale", 0) or 0)) if saldo_row else Decimal("0")
+    )
+    saldo_cassa = saldo_cassa_calcolato(anno, ini_cassa)
+    saldo_conto = saldo_conto_calcolato(anno, ini_conto)
+    if saldo_cassa < 0:
         out.append({"livello": "danger", "testo": "Saldo di cassa negativo."})
+    if saldo_conto < 0:
+        out.append({"livello": "warning", "testo": "Saldo di conto economale negativo."})
 
     for m in Movimento.query.filter_by(anno=anno).filter(Movimento.stato != StatoMovimento.stornato):
+        if m.da_giustificare:
+            dettaglio = (m.causale or m.beneficiario_fornitore or "").strip()
+            if len(dettaglio) > 60:
+                dettaglio = dettaglio[:57] + "…"
+            importo_txt = f"{float(m.importo):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+            testo = f"Movimento {m.numero_progressivo:04d} da giustificare ({importo_txt} €"
+            if dettaglio:
+                testo += f" — {dettaglio}"
+            testo += ")."
+            out.append({"livello": "warning", "testo": testo})
         if m.tipo == TipoMovimento.uscita and m.allegati.count() == 0:
             out.append(
                 {

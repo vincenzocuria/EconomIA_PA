@@ -1,16 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Saldo iniziale — EconomIA_PA{% endblock %}
+{% block title %}Saldi iniziali — EconomIA_PA{% endblock %}
 {% block content %}
-<h1 class="h4 mb-3">Saldo iniziale cassa per anno</h1>
+<h1 class="h4 mb-3">Saldi iniziali per anno</h1>
 <form class="d-flex align-items-center gap-2 mb-3" method="get">
   <label class="small text-muted mb-0">Anno</label>
   <input type="number" class="form-control form-control-sm" name="anno" value="{{ anno }}" style="width:6rem">
   <button class="btn btn-sm btn-outline-secondary" type="submit">Vai</button>
 </form>
+<div class="alert alert-warning small mb-3">
+  <strong>Non confondere cassa e conto.</strong>
+  La <em>cassa</em> sono i contanti nel cassetto; il <em>conto</em> è il saldo del conto economale in banca (da estratto).
+  Un prelievo aumenta la cassa e diminuisce il conto; un versamento fa l’opposto.
+</div>
 <form method="post" class="card border-0 shadow-sm p-3 p-md-4">
   {{ form.hidden_tag() }}
   {{ form.saldo_iniziale.label(class="form-label") }}
   {{ form.saldo_iniziale(class="form-control mb-3") }}
+  {{ form.saldo_conto_iniziale.label(class="form-label") }}
+  {{ form.saldo_conto_iniziale(class="form-control mb-3") }}
   {{ form.note.label(class="form-label") }}
   {{ form.note(class="form-control", rows=2) }}
   <div class="mt-4">{{ form.submit(class="btn btn-primary") }}</div>

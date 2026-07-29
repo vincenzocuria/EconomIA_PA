@@ -9,7 +9,12 @@ from app.models.cassetto import SaldoAnnuale
 from app.models.movimento import Movimento, StatoMovimento
 from app.models.verbale_verifica import VerbaleVerifica
 from app.services.alerts import prossima_scadenza_verbale, raccogli_alert, trimestre_corrente, ultimo_backup
-from app.services.cassa import saldo_calcolato, totale_entrate, totale_uscite
+from app.services.cassa import (
+    saldo_cassa_calcolato,
+    saldo_conto_calcolato,
+    totale_entrate,
+    totale_uscite,
+)
 
 bp = Blueprint("main", __name__)
 
@@ -19,14 +24,21 @@ bp = Blueprint("main", __name__)
 def dashboard():
     anno = int(request.args.get("anno", date.today().year))
     saldo_row = SaldoAnnuale.query.get(anno)
-    ini = Decimal(str(saldo_row.saldo_iniziale)) if saldo_row else Decimal("0")
-    saldo = saldo_calcolato(anno, ini)
+    ini_cassa = Decimal(str(saldo_row.saldo_iniziale)) if saldo_row else Decimal("0")
+    ini_conto = (
+        Decimal(str(getattr(saldo_row, "saldo_conto_iniziale", 0) or 0)) if saldo_row else Decimal("0")
+    )
+    saldo_cassa = saldo_cassa_calcolato(anno, ini_cassa)
+    saldo_conto = saldo_conto_calcolato(anno, ini_conto)
     n_mov = Movimento.query.filter_by(anno=anno).count()
     n_buoni = BuonoEconomale.query.filter_by(anno=anno).count()
     allegati_mancanti = 0
+    da_giustificare_n = 0
     for m in Movimento.query.filter_by(anno=anno).filter(Movimento.stato != StatoMovimento.stornato):
         if m.allegati.count() == 0:
             allegati_mancanti += 1
+        if m.da_giustificare:
+            da_giustificare_n += 1
     ultimo_v = (
         VerbaleVerifica.query.filter_by(anno=anno)
         .order_by(VerbaleVerifica.data_verbale.desc(), VerbaleVerifica.numero.desc())
@@ -45,13 +57,16 @@ def dashboard():
     return render_template(
         "dashboard.html",
         anno=anno,
-        saldo_iniziale=ini,
-        saldo_attuale=saldo,
+        saldo_cassa_iniziale=ini_cassa,
+        saldo_cassa_attuale=saldo_cassa,
+        saldo_conto_iniziale=ini_conto,
+        saldo_conto_attuale=saldo_conto,
         tot_entrate=totale_entrate(anno),
         tot_uscite=totale_uscite(anno),
         n_mov=n_mov,
         n_buoni=n_buoni,
         allegati_mancanti=allegati_mancanti,
+        da_giustificare_n=da_giustificare_n,
         ultimo_verbale=ultimo_v,
         ultimo_verbale_label=ultimo_verbale_label,
         prossima_scadenza=scad,

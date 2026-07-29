@@ -7,7 +7,7 @@ from openpyxl.styles import Font
 from app.models.buono import BuonoEconomale
 from app.models.cassetto import SaldoAnnuale
 from app.models.movimento import Movimento
-from app.services.cassa import effetto_su_saldo, movimenti_contabili
+from app.services.cassa import effetto_su_cassa, effetto_su_conto, movimenti_contabili
 from app.services.movimento_display import testo_filiale_per_movimento
 
 
@@ -101,21 +101,29 @@ def export_riepilogo_annuale_excel(anno: int) -> BytesIO:
     ws = wb.active
     ws.title = f"Riepilogo {anno}"
     saldo_row = SaldoAnnuale.query.get(anno)
-    ini = Decimal(str(saldo_row.saldo_iniziale)) if saldo_row else Decimal("0")
-    ws.append(["Riepilogo annuale cassa economale", anno])
-    ws.append(["Saldo iniziale", float(ini)])
-    per_t = {1: Decimal("0"), 2: Decimal("0"), 3: Decimal("0"), 4: Decimal("0")}
+    ini_cassa = Decimal(str(saldo_row.saldo_iniziale)) if saldo_row else Decimal("0")
+    ini_conto = (
+        Decimal(str(getattr(saldo_row, "saldo_conto_iniziale", 0) or 0)) if saldo_row else Decimal("0")
+    )
+    ws.append(["Riepilogo annuale cassa / conto economale", anno])
+    ws.append(["Saldo iniziale cassa (contanti)", float(ini_cassa)])
+    ws.append(["Saldo iniziale conto (banca)", float(ini_conto)])
+    per_t_cassa = {1: Decimal("0"), 2: Decimal("0"), 3: Decimal("0"), 4: Decimal("0")}
+    per_t_conto = {1: Decimal("0"), 2: Decimal("0"), 3: Decimal("0"), 4: Decimal("0")}
     for m in movimenti_contabili(anno):
-        per_t[m.trimestre] = per_t[m.trimestre] + effetto_su_saldo(m)
-    tot = sum(per_t.values(), start=Decimal("0"))
+        per_t_cassa[m.trimestre] = per_t_cassa[m.trimestre] + effetto_su_cassa(m)
+        per_t_conto[m.trimestre] = per_t_conto[m.trimestre] + effetto_su_conto(m)
+    tot_cassa = sum(per_t_cassa.values(), start=Decimal("0"))
+    tot_conto = sum(per_t_conto.values(), start=Decimal("0"))
     ws.append([])
-    ws.append(["Trimestre", "Variazione cassa"])
+    ws.append(["Trimestre", "Variazione cassa", "Variazione conto"])
     for t in range(1, 5):
-        ws.append([f"T{t}", float(per_t[t])])
-    ws.append(["Totale movimenti", float(tot)])
-    ws.append(["Saldo finale stimato", float(ini + tot)])
+        ws.append([f"T{t}", float(per_t_cassa[t]), float(per_t_conto[t])])
+    ws.append(["Totale movimenti", float(tot_cassa), float(tot_conto)])
+    ws.append(["Saldo finale cassa stimato", float(ini_cassa + tot_cassa)])
+    ws.append(["Saldo finale conto stimato", float(ini_conto + tot_conto)])
     ws.append([])
-    ws.append(["Nota", "Calcolo da registro locale; verificare con contabilità ufficiale."])
+    ws.append(["Nota", "Calcolo da registro locale; verificare con contabilità ufficiale e estratto conto."])
     bio = BytesIO()
     wb.save(bio)
     bio.seek(0)

@@ -36,6 +36,7 @@ class EconomoForm(FlaskForm):
 
 
 class SaldoAnnoForm(FlaskForm):
-    saldo_iniziale = DecimalField("Saldo iniziale cassa", places=2)
+    saldo_iniziale = DecimalField("Saldo iniziale cassa (contanti)", places=2)
+    saldo_conto_iniziale = DecimalField("Saldo iniziale conto (estratto)", places=2)
     note = TextAreaField("Note")
-    submit = SubmitField("Aggiorna saldo annuale")
+    submit = SubmitField("Aggiorna saldi annuali")

@@ -86,6 +86,7 @@ def create_app(config_name: str | None = None) -> Flask:
     with app.app_context():
         db.create_all()
         from app.services.schema_allegato import applica_schema_allegato
+        from app.services.schema_cassa import applica_schema_cassa
         from app.services.schema_filiale import applica_schema_filiale_banca
         from app.services.schema_movimento import applica_patch_movimento
         from app.services.schema_verbale_verifica import applica_schema_verbale_verifica
@@ -94,6 +95,7 @@ def create_app(config_name: str | None = None) -> Flask:
         applica_schema_filiale_banca()
         applica_schema_allegato()
         applica_schema_verbale_verifica()
+        applica_schema_cassa()
         _ensure_default_user(app)
         _ensure_settings_rows()
 
@@ -155,5 +157,5 @@ def _ensure_settings_rows() -> None:
         db.session.add(EconomoSettings(id=1))
     y = date.today().year
     if SaldoAnnuale.query.get(y) is None:
-        db.session.add(SaldoAnnuale(anno=y, saldo_iniziale=0))
+        db.session.add(SaldoAnnuale(anno=y, saldo_iniziale=0, saldo_conto_iniziale=0))
     db.session.commit()

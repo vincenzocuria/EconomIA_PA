@@ -13,7 +13,7 @@ from app.config import INSTANCE_DIR
 from app.extensions import db
 from app.models.movimento import Movimento, StatoMovimento
 from app.models.verbale import VerbaleTrimestrale
-from app.services.cassa import effetto_su_saldo
+from app.services.cassa import effetto_su_cassa, effetto_su_conto
 from app.services.movimento_display import dettaglio_banca_breve
 from app.services.movimento_tipi import TIPO_MOVIMENTO_LABELS
 from app.services.pdf_base import disclaimer_registro, intestazione_flowables
@@ -79,28 +79,36 @@ def genera_verbale_trimestrale_pdf(anno: int, trimestre: int) -> Path:
         .order_by(Movimento.numero_progressivo)
         .all()
     )
+    def _eur(v: Decimal) -> str:
+        return f"€ {v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
     rows: list[list] = [
         [
             _p("N.", ps_th),
             _p("Data", ps_th),
             _p("Tipo", ps_th),
-            _p("Importo", ps_th),
+            _p("Δ cassa", ps_th),
+            _p("Δ conto", ps_th),
             _p("Causale", ps_th),
             _p("Beneficiario", ps_th),
             _p("Banca / ora", ps_th),
         ]
     ]
-    tot = Decimal("0")
+    tot_cassa = Decimal("0")
+    tot_conto = Decimal("0")
     for m in movs:
-        eff = effetto_su_saldo(m)
-        tot += eff
+        eff_c = effetto_su_cassa(m)
+        eff_b = effetto_su_conto(m)
+        tot_cassa += eff_c
+        tot_conto += eff_b
         tipo_v = TIPO_MOVIMENTO_LABELS.get(m.tipo, m.tipo.value if hasattr(m.tipo, "value") else str(m.tipo))
         rows.append(
             [
                 _p(f"{m.numero_progressivo:04d}", ps_td),
                 _p(m.data_movimento.strftime("%d/%m/%Y"), ps_td),
                 _p(tipo_v, ps_td),
-                _p(f"€ {eff:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."), ps_td_num),
+                _p(_eur(eff_c), ps_td_num),
+                _p(_eur(eff_b), ps_td_num),
                 _p(m.causale or "—", ps_td),
                 _p(m.beneficiario_fornitore or "—", ps_td),
                 _p(dettaglio_banca_breve(m) or "—", ps_td),
@@ -108,10 +116,11 @@ def genera_verbale_trimestrale_pdf(anno: int, trimestre: int) -> Path:
         )
     rows.append(
         [
-            _p("Saldo movimenti trimestre", ps_th),
+            _p("Variazione trimestre", ps_th),
             "",
             "",
-            _p(f"€ {tot:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."), ps_td_num),
+            _p(_eur(tot_cassa), ps_td_num),
+            _p(_eur(tot_conto), ps_td_num),
             "",
             "",
             "",
@@ -120,13 +129,14 @@ def genera_verbale_trimestrale_pdf(anno: int, trimestre: int) -> Path:
 
     usable_w = A4[0] - 4 * cm
     col_w = [
-        1.0 * cm,
-        1.85 * cm,
-        2.85 * cm,
-        2.0 * cm,
-        usable_w - (1.0 + 1.85 + 2.85 + 2.0 + 2.35 + 2.35) * cm,
-        2.35 * cm,
-        2.35 * cm,
+        0.9 * cm,
+        1.7 * cm,
+        2.4 * cm,
+        1.7 * cm,
+        1.7 * cm,
+        usable_w - (0.9 + 1.7 + 2.4 + 1.7 + 1.7 + 2.1 + 2.1) * cm,
+        2.1 * cm,
+        2.1 * cm,
     ]
 
     t = Table(rows, colWidths=col_w, repeatRows=1)

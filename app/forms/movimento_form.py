@@ -1,5 +1,15 @@
 from flask_wtf import FlaskForm
-from wtforms import DateField, DecimalField, SelectField, StringField, SubmitField, TextAreaField, TimeField
+from flask_wtf.file import FileAllowed, FileField
+from wtforms import (
+    BooleanField,
+    DateField,
+    DecimalField,
+    SelectField,
+    StringField,
+    SubmitField,
+    TextAreaField,
+    TimeField,
+)
 from wtforms.validators import DataRequired, Optional
 
 from app.models.movimento import StatoMovimento
@@ -23,8 +33,19 @@ class MovimentoForm(FlaskForm):
     modalita_pagamento = StringField("Modalità pagamento", validators=[Optional()])
     filiale_id = SelectField("Filiale / sportello", coerce=int, validators=[Optional()])
     rif_ricevuta = StringField("Riferimento ricevuta operazione", validators=[Optional()])
+    allegato_ricevuta = FileField(
+        "Allegato ricevuta / giustificativo",
+        validators=[
+            Optional(),
+            FileAllowed(["pdf", "jpg", "jpeg", "png", "webp"], "Solo PDF o immagini."),
+        ],
+    )
     capitolo_riferimento = StringField("Capitolo / riferimento contabile", validators=[Optional()])
     note = TextAreaField("Note", validators=[Optional()])
+    da_giustificare = BooleanField(
+        "Da giustificare (anticipo / scontrino in arrivo)",
+        default=False,
+    )
     stato = SelectField("Stato", choices=_choices_stato(), validators=[DataRequired()])
     submit = SubmitField("Salva")
 

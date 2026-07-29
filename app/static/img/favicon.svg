@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="EconomIA_PA">
+  <rect width="32" height="32" rx="6" fill="#0f172a"/>
+  <path fill="#fff" d="M7.2 6.5h13.2v3.2H11v3.6h8v3.1H11v5H21v3.2H7.2z"/>
+  <circle cx="23.2" cy="19" r="6.5" fill="#d4a017"/>
+  <text x="23.2" y="22.4" text-anchor="middle" font-size="10" font-family="Segoe UI, Arial, sans-serif" font-weight="700" fill="#0f172a">€</text>
+</svg>

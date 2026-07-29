@@ -107,15 +107,16 @@ def cassa():
     anno = int(request.args.get("anno", date.today().year))
     row = SaldoAnnuale.query.get(anno)
     if row is None:
-        row = SaldoAnnuale(anno=anno, saldo_iniziale=0)
+        row = SaldoAnnuale(anno=anno, saldo_iniziale=0, saldo_conto_iniziale=0)
         db.session.add(row)
         db.session.commit()
     form = SaldoAnnoForm(obj=row)
     if form.validate_on_submit():
         row.saldo_iniziale = form.saldo_iniziale.data
+        row.saldo_conto_iniziale = form.saldo_conto_iniziale.data
         row.note = form.note.data or ""
         db.session.commit()
         scrivi_audit("saldo_annuale", anno, "aggiornamento", {})
-        flash("Saldo iniziale aggiornato.", "success")
+        flash("Saldi iniziali cassa e conto aggiornati.", "success")
         return redirect(url_for("impostazioni.cassa", anno=anno))
     return render_template("impostazioni/cassa.html", form=form, row=row, anno=anno)

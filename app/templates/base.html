@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   {{ csrf_meta_tag() }}
   <title>{% block title %}EconomIA_PA{% endblock %}</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.svg') }}" type="image/svg+xml">
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}" type="image/png" sizes="512x512">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/favicon.png') }}">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
 </head>
@@ -28,7 +31,7 @@
           <ul class="dropdown-menu">
             <li><a class="dropdown-item" href="{{ url_for('impostazioni.ente') }}">Dati ente e logo</a></li>
             <li><a class="dropdown-item" href="{{ url_for('impostazioni.economo') }}">Dati economo</a></li>
-            <li><a class="dropdown-item" href="{{ url_for('impostazioni.cassa') }}">Saldo iniziale anno</a></li>
+            <li><a class="dropdown-item" href="{{ url_for('impostazioni.cassa') }}">Saldi cassa e conto</a></li>
             <li><a class="dropdown-item" href="{{ url_for('filiali_banca.lista') }}">Filiali banca</a></li>
           </ul>
         </li>

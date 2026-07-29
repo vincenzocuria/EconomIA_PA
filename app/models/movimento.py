@@ -47,6 +47,7 @@ class Movimento(db.Model):
     rif_ricevuta = db.Column(db.String(120), default="")
     capitolo_riferimento = db.Column(db.String(200), default="")
     note = db.Column(db.Text, default="")
+    da_giustificare = db.Column(db.Boolean, nullable=False, default=False, index=True)
     stato = db.Column(db.Enum(StatoMovimento), nullable=False, default=StatoMovimento.registrato)
     trimestre = db.Column(db.Integer, nullable=False, default=1)
     movimento_collegato_id = db.Column(db.Integer, db.ForeignKey("movimento.id"), nullable=True)

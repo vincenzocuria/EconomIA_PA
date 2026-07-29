@@ -15,6 +15,8 @@ from app.models.buono import BuonoEconomale
 from app.models.movimento import Movimento
 from app.services.audit_log import scrivi_audit
 from app.services.file_hash import sha256_file
+from app.services.giustificativo import segna_giustificato
+from app.services.movimento_scelte import scelte_movimento
 from app.services.upload_allegato import (
     estensione_consentita,
     mime_consentito_per_estensione,
@@ -24,13 +26,6 @@ from app.services.upload_allegato import (
 )
 
 bp = Blueprint("allegati", __name__, url_prefix="/allegati")
-
-
-def _mov_scelte(anno: int):
-    opts = [(0, "— Nessun movimento —")]
-    for m in Movimento.query.filter_by(anno=anno).order_by(Movimento.numero_progressivo.desc()):
-        opts.append((m.id, f"{m.numero_progressivo:04d}/{m.anno} — {(m.causale or '')[:35]}"))
-    return opts
 
 
 def _buoni_scelte(anno: int):
@@ -59,7 +54,7 @@ def lista():
         .all()
     )
     form = AllegatoForm()
-    form.movimento_id.choices = _mov_scelte(anno)
+    form.movimento_id.choices = scelte_movimento(anno)
     form.buono_id.choices = _buoni_scelte(anno)
     return render_template("allegati/lista.html", rows=rows, anno=anno, form=form)
 
@@ -69,7 +64,7 @@ def lista():
 def carica():
     anno = int(request.form.get("anno", date.today().year))
     form = AllegatoForm()
-    form.movimento_id.choices = _mov_scelte(anno)
+    form.movimento_id.choices = scelte_movimento(anno)
     form.buono_id.choices = _buoni_scelte(anno)
     if not form.validate_on_submit():
         flash("Errore validazione allegato.", "danger")
@@ -131,6 +126,7 @@ def carica():
         is_principale=bool(form.is_principale.data),
     )
     db.session.add(row)
+    segna_giustificato(m)
     db.session.commit()
     scrivi_audit("allegato", row.id, "upload", {"file": nome})
     flash("Allegato caricato.", "success")

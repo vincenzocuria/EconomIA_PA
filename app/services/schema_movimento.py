@@ -18,6 +18,10 @@ def applica_patch_movimento() -> None:
         stmts.append("ALTER TABLE movimento ADD COLUMN filiale_banca VARCHAR(200) DEFAULT ''")
     if "rif_ricevuta" not in names:
         stmts.append("ALTER TABLE movimento ADD COLUMN rif_ricevuta VARCHAR(120) DEFAULT ''")
+    if "da_giustificare" not in names:
+        stmts.append(
+            "ALTER TABLE movimento ADD COLUMN da_giustificare BOOLEAN NOT NULL DEFAULT 0"
+        )
     for sql in stmts:
         db.session.execute(text(sql))
     if stmts:
