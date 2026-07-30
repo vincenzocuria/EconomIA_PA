@@ -30,6 +30,7 @@ class Movimento(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     anno = db.Column(db.Integer, nullable=False, index=True)
+    sezionale_id = db.Column(db.Integer, db.ForeignKey("sezionale.id"), nullable=True, index=True)
     numero_progressivo = db.Column(db.Integer, nullable=False)
     data_movimento = db.Column(db.Date, nullable=False, index=True)
     ora_movimento = db.Column(db.Time, nullable=True)
@@ -66,6 +67,11 @@ class Movimento(db.Model):
         foreign_keys=[movimento_collegato_id],
     )
     creato_da = db.relationship("User", foreign_keys=[created_by_id])
+    sezionale = db.relationship(
+        "Sezionale",
+        foreign_keys=[sezionale_id],
+        lazy="joined",
+    )
     filiale = db.relationship(
         "FilialeBanca",
         foreign_keys=[filiale_id],
@@ -74,5 +80,10 @@ class Movimento(db.Model):
     )
 
     __table_args__ = (
-        db.UniqueConstraint("anno", "numero_progressivo", name="uq_movimento_anno_num"),
+        db.UniqueConstraint(
+            "anno",
+            "sezionale_id",
+            "numero_progressivo",
+            name="uq_movimento_anno_sez_num",
+        ),
     )

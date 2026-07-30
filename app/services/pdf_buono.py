@@ -9,7 +9,7 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 
 from app.config import INSTANCE_DIR
 from app.models.buono import BuonoEconomale
-
+from app.services.numero_display import formato_numero_sezionale
 from app.services.pdf_base import disclaimer_registro, intestazione_flowables
 
 
@@ -32,7 +32,7 @@ def genera_pdf_buono(b: BuonoEconomale) -> Path:
 
     stato_v = b.stato.value if hasattr(b.stato, "value") else str(b.stato)
     data = [
-        ["Numero", f"{b.numero_progressivo:04d} / {b.anno}"],
+        ["Numero", formato_numero_sezionale(b)],
         ["Data", b.data_buono.isoformat()],
         ["Stato", stato_v],
         ["Richiedente", b.richiedente or ""],

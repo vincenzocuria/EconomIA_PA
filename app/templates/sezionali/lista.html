@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Sezionali — EconomIA_PA{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0">Sezionali numerazione</h1>
+  <a class="btn btn-sm btn-primary" href="{{ url_for('sezionali.nuovo') }}">Nuovo sezionale</a>
+</div>
+<p class="small text-muted mb-3">Serie indipendenti di numerazione (es. GEN, RIM, BAN). Ogni sezionale ha il proprio progressivo per anno.</p>
+<div class="table-responsive card border-0 shadow-sm">
+  <table class="table table-sm table-hover mb-0">
+    <thead class="table-light">
+      <tr>
+        <th>Ord.</th>
+        <th>Codice</th>
+        <th>Descrizione</th>
+        <th>Stato</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in rows %}
+      <tr>
+        <td>{{ s.ordinamento }}</td>
+        <td class="fw-semibold">{{ s.codice }}</td>
+        <td>{{ s.descrizione or "—" }}</td>
+        <td>{% if s.attiva %}<span class="text-success">Attivo</span>{% else %}<span class="text-secondary">Non attivo</span>{% endif %}</td>
+        <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{{ url_for('sezionali.modifica', id=s.id) }}">Modifica</a></td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="p-4 text-muted">Nessun sezionale.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

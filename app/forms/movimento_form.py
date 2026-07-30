@@ -4,13 +4,14 @@ from wtforms import (
     BooleanField,
     DateField,
     DecimalField,
+    IntegerField,
     SelectField,
     StringField,
     SubmitField,
     TextAreaField,
     TimeField,
 )
-from wtforms.validators import DataRequired, Optional
+from wtforms.validators import DataRequired, NumberRange, Optional
 
 from app.models.movimento import StatoMovimento
 
@@ -20,6 +21,11 @@ def _choices_stato():
 
 
 class MovimentoForm(FlaskForm):
+    sezionale_id = SelectField("Sezionale", coerce=int, validators=[DataRequired()])
+    numero_progressivo = IntegerField(
+        "Numero",
+        validators=[DataRequired(), NumberRange(min=1, max=999999)],
+    )
     data_movimento = DateField("Data movimento", validators=[DataRequired()])
     ora_movimento = TimeField("Ora (opzionale)", validators=[Optional()])
     tipo = SelectField("Tipo", choices=[], validators=[DataRequired()])

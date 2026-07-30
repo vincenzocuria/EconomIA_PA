@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ titolo }} — EconomIA_PA{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">{{ titolo }}</h1>
+<form method="post" class="card border-0 shadow-sm p-3 p-md-4">
+  {{ form.hidden_tag() }}
+  <div class="row g-3">
+    <div class="col-md-3">{{ form.codice.label(class="form-label") }}{{ form.codice(class="form-control", maxlength=16) }}</div>
+    <div class="col-md-5">{{ form.descrizione.label(class="form-label") }}{{ form.descrizione(class="form-control") }}</div>
+    <div class="col-md-2">{{ form.ordinamento.label(class="form-label") }}{{ form.ordinamento(class="form-control") }}</div>
+    <div class="col-md-2 d-flex align-items-end pb-2">
+      <div class="form-check">{{ form.attiva(class="form-check-input") }}{{ form.attiva.label(class="form-check-label") }}</div>
+    </div>
+  </div>
+  <div class="mt-4 d-flex gap-2">
+    {{ form.submit(class="btn btn-primary") }}
+    <a class="btn btn-outline-secondary" href="{{ url_for('sezionali.lista') }}">Annulla</a>
+  </div>
+</form>
+{% endblock %}

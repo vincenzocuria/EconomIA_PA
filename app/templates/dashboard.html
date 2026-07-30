@@ -50,81 +50,107 @@
   </div>
 </div>
 <div class="row g-3 mb-4">
-  <div class="col-md-6 col-6">
+  <div class="col-md-3 col-6">
     <div class="card border-0 shadow-sm h-100">
-      <div class="card-body">
-        <div class="text-muted small">Entrate / reintegri / prelievi (aumentano la cassa)</div>
+      <div class="card-body py-3">
+        <div class="text-muted small">Entrate / reintegri / prelievi</div>
         <div class="fs-6 fw-semibold text-success">{{ tot_entrate|eur }}</div>
       </div>
     </div>
   </div>
-  <div class="col-md-6 col-6">
+  <div class="col-md-3 col-6">
     <div class="card border-0 shadow-sm h-100">
-      <div class="card-body">
-        <div class="text-muted small">Uscite / versamenti (diminuiscono la cassa)</div>
+      <div class="card-body py-3">
+        <div class="text-muted small">Uscite / versamenti</div>
         <div class="fs-6 fw-semibold text-danger">{{ tot_uscite|eur }}</div>
       </div>
     </div>
   </div>
-</div>
-
-<div class="row g-4">
-  <div class="col-lg-6">
-    <div class="card border-0 shadow-sm">
-      <div class="card-header bg-white fw-semibold">Indicatori</div>
-      <ul class="list-group list-group-flush small">
-        <li class="list-group-item d-flex justify-content-between"><span>Movimenti (anno)</span><span>{{ n_mov }}</span></li>
-        <li class="list-group-item d-flex justify-content-between"><span>Buoni (anno)</span><span>{{ n_buoni }}</span></li>
-        <li class="list-group-item d-flex justify-content-between"><span>Movimenti senza allegato</span><span>{{ allegati_mancanti }}</span></li>
-        <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
-          <span>Da giustificare</span>
-          <span>
-            {% if da_giustificare_n %}
-            <a href="{{ url_for('movimenti.lista', anno=anno, da_giustificare=1) }}" class="badge text-bg-warning text-decoration-none">{{ da_giustificare_n }}</a>
-            {% else %}
-            0
-            {% endif %}
-          </span>
-        </li>
-        <li class="list-group-item d-flex justify-content-between"><span>Ultimo verbale ufficiale</span>
-          <span>
-            {% if ultimo_verbale_label %}
-              {{ ultimo_verbale_label }}
-            {% elif ultimo_verbale and ultimo_verbale.__class__.__name__ == 'VerbaleVerifica' %}
-              n. {{ ultimo_verbale.numero }} — T{{ ultimo_verbale.trimestre }} — {{ ultimo_verbale.data_verbale.strftime('%d/%m/%Y') }}
-            {% elif ultimo_verbale %}
-              T{{ ultimo_verbale.trimestre }} — {{ ultimo_verbale.generato_il.strftime('%d/%m/%Y') }}
-            {% else %}—{% endif %}
-          </span>
-        </li>
-        <li class="list-group-item d-flex justify-content-between"><span>Riferimento scadenza trimestre</span>
-          <span>{% if prossima_scadenza %}{{ prossima_scadenza.strftime('%d/%m/%Y') }}{% else %}—{% endif %}</span>
-        </li>
-        <li class="list-group-item d-flex justify-content-between"><span>Ultimo backup</span>
-          <span>{% if ultimo_backup %}{{ ultimo_backup.strftime('%d/%m/%Y %H:%M') }}{% else %}Mai{% endif %}</span>
-        </li>
-      </ul>
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body py-3">
+        <div class="text-muted small">Movimenti · Buoni</div>
+        <div class="fs-6 fw-semibold">{{ n_mov }} · {{ n_buoni }}</div>
+      </div>
     </div>
   </div>
-  <div class="col-lg-6">
-    <div class="card border-0 shadow-sm">
-      <div class="card-header bg-white fw-semibold">Alert</div>
-      <div class="card-body p-0">
-        {% if alert %}
-        <ul class="list-group list-group-flush small">
-          {% for a in alert %}
-          <li class="list-group-item {% if a.livello == 'danger' %}text-danger{% elif a.livello == 'warning' %}text-warning{% elif a.livello == 'info' %}text-primary{% else %}text-secondary{% endif %}">{{ a.testo }}</li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <p class="p-3 mb-0 text-muted small">Nessun alert prioritario.</p>
-        {% endif %}
+  <div class="col-md-3 col-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body py-3">
+        <div class="text-muted small">Scadenza trim. · Backup</div>
+        <div class="fs-6 fw-semibold small">
+          {% if prossima_scadenza %}{{ prossima_scadenza.strftime('%d/%m/%Y') }}{% else %}—{% endif %}
+          ·
+          {% if ultimo_backup %}{{ ultimo_backup.strftime('%d/%m/%Y') }}{% else %}Mai{% endif %}
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<div class="card border-0 shadow-sm mt-4">
+<div class="row g-4 mb-4">
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white fw-semibold">Cose da fare</div>
+      <div class="card-body p-0">
+        {% if todo %}
+        <ul class="list-group list-group-flush">
+          {% for t in todo %}
+          <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+            <a href="{{ t.url }}" class="text-decoration-none flex-grow-1
+              {% if t.livello == 'danger' %}text-danger
+              {% elif t.livello == 'warning' %}text-warning
+              {% elif t.livello == 'info' %}text-primary
+              {% else %}text-body{% endif %}">
+              {{ t.titolo }}
+            </a>
+            <span class="badge
+              {% if t.livello == 'danger' %}text-bg-danger
+              {% elif t.livello == 'warning' %}text-bg-warning
+              {% elif t.livello == 'info' %}text-bg-info
+              {% else %}text-bg-secondary{% endif %}">{{ t.n }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="p-3 mb-0 text-muted small">Nessuna azione pendente. Ottimo lavoro.</p>
+        {% endif %}
+      </div>
+      {% if ultimo_verbale_label %}
+      <div class="card-footer bg-white small text-muted">
+        Ultimo verbale ufficiale: {{ ultimo_verbale_label }}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="col-lg-7">
+    {% if alert_extra %}
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold">Altri avvisi</div>
+      <ul class="list-group list-group-flush small">
+        {% for a in alert_extra %}
+        <li class="list-group-item {% if a.livello == 'danger' %}text-danger{% else %}text-secondary{% endif %}">{{ a.testo }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Buoni per stato</div>
+      <div class="card-body" style="height:16rem">
+        <canvas id="chart-buoni-stato" aria-label="Grafico buoni per stato"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4" id="dashboard-charts" data-charts='{{ charts|tojson }}'>
+  <div class="card-header bg-white fw-semibold">Andamento cassa per trimestre</div>
+  <div class="card-body" style="height:18rem">
+    <canvas id="chart-cassa-trimestre" aria-label="Grafico cassa trimestrale"></canvas>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
   <div class="card-header bg-white d-flex justify-content-between align-items-center">
     <span class="fw-semibold">Movimenti recenti</span>
     <a class="btn btn-sm btn-outline-primary" href="{{ url_for('movimenti.lista', anno=anno) }}">Vai al registro</a>
@@ -134,8 +160,8 @@
       <thead class="table-light"><tr><th>N.</th><th>Data</th><th>Tipo</th><th>Importo</th><th>Causale</th></tr></thead>
       <tbody>
         {% for m in movimenti_recenti %}
-        <tr data-href="{{ url_for('movimenti.dettaglio', id=m.id) }}" tabindex="0" role="link" aria-label="Dettaglio movimento {{ '%04d'|format(m.numero_progressivo) }}">
-          <td>{{ '%04d'|format(m.numero_progressivo) }}</td>
+        <tr data-href="{{ url_for('movimenti.dettaglio', id=m.id) }}" tabindex="0" role="link" aria-label="Dettaglio movimento {{ m|formato_num }}">
+          <td>{{ m|formato_num }}</td>
           <td>{{ m|data_ora_cassa }}</td>
           <td>{{ m|tipo_mov_label }}</td>
           <td>{{ m.importo|eur }}</td>
@@ -148,4 +174,8 @@
     </table>
   </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/dashboard_charts.js') }}"></script>
 {% endblock %}

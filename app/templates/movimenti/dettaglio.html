@@ -1,12 +1,15 @@
 {% extends "base.html" %}
-{% block title %}Movimento {{ '%04d'|format(m.numero_progressivo) }}/{{ m.anno }} — EconomIA_PA{% endblock %}
+{% block title %}Movimento {{ m|formato_num }} — EconomIA_PA{% endblock %}
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-  <h1 class="h4 mb-0">Movimento {{ '%04d'|format(m.numero_progressivo) }}/{{ m.anno }}</h1>
+  <h1 class="h4 mb-0">Movimento {{ m|formato_num }}</h1>
   <div class="d-flex flex-wrap gap-2">
     {% if m.stato.value != 'stornato' %}
     <a class="btn btn-sm btn-primary" href="{{ url_for('movimenti.modifica', id=m.id) }}">Modifica</a>
     <a class="btn btn-sm btn-outline-danger" href="{{ url_for('movimenti.storno', id=m.id) }}">Storno</a>
+    {% if m.tipo.value == 'uscita' and not m.buono_id %}
+    <a class="btn btn-sm btn-success" href="{{ url_for('movimenti.proposta_buono', id=m.id) }}">Crea buono</a>
+    {% endif %}
     {% endif %}
     <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('movimenti.lista', anno=m.anno) }}">Registro</a>
   </div>
@@ -87,7 +90,7 @@
       {% if m.buono %}
       <div class="col-md-6">
         <div class="text-muted">Buono economale</div>
-        <div>{{ '%04d'|format(m.buono.numero_progressivo) }}/{{ m.buono.anno }}</div>
+        <div><a href="{{ url_for('buoni.modifica', id=m.buono.id) }}">{{ m.buono|formato_num }}</a></div>
       </div>
       {% endif %}
       {% if m.note %}

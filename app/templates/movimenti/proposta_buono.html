@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Creare buono? — EconomIA_PA{% endblock %}
+{% block content %}
+<div class="card border-0 shadow-sm p-4" style="max-width:36rem">
+  <h1 class="h4 mb-3">Vuoi creare il buono / modulo da firmare?</h1>
+  <p class="mb-2">Hai appena registrato l’uscita <strong>{{ m|formato_num }}</strong>
+    per <strong>{{ m.importo|eur }}</strong>.</p>
+  <p class="small text-muted mb-4">
+    Scegli <strong>Sì</strong> se serve il modulo rimborso da far firmare al dipendente/richiedente.
+    Scegli <strong>No</strong> per acquisti diretti (es. scontrino ferramenta) senza carta.
+  </p>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-primary" href="{{ url_for('buoni.nuovo', anno=m.anno, da_movimento=m.id) }}">Sì, crea buono precompilato</a>
+    <a class="btn btn-outline-secondary" href="{{ url_for('movimenti.dettaglio', id=m.id) }}">No, solo movimento</a>
+  </div>
+</div>
+{% endblock %}

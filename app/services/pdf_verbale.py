@@ -16,6 +16,7 @@ from app.models.verbale import VerbaleTrimestrale
 from app.services.cassa import effetto_su_cassa, effetto_su_conto
 from app.services.movimento_display import dettaglio_banca_breve
 from app.services.movimento_tipi import TIPO_MOVIMENTO_LABELS
+from app.services.numero_display import formato_numero_sezionale
 from app.services.pdf_base import disclaimer_registro, intestazione_flowables
 
 
@@ -104,7 +105,7 @@ def genera_verbale_trimestrale_pdf(anno: int, trimestre: int) -> Path:
         tipo_v = TIPO_MOVIMENTO_LABELS.get(m.tipo, m.tipo.value if hasattr(m.tipo, "value") else str(m.tipo))
         rows.append(
             [
-                _p(f"{m.numero_progressivo:04d}", ps_td),
+                _p(formato_numero_sezionale(m), ps_td),
                 _p(m.data_movimento.strftime("%d/%m/%Y"), ps_td),
                 _p(tipo_v, ps_td),
                 _p(_eur(eff_c), ps_td_num),

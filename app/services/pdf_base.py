@@ -1,8 +1,6 @@
 """Elementi comuni ReportLab per intestazione ente/economo."""
-from pathlib import Path
 from xml.sax.saxutils import escape
 
-from flask import current_app
 from reportlab.lib import colors
 from reportlab.lib.enums import TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import A4
@@ -12,6 +10,7 @@ from reportlab.platypus import Image, Paragraph, Spacer, Table, TableStyle
 
 from app.models.economo import EconomoSettings
 from app.models.ente import EnteSettings
+from app.services.logo_ente import logo_ente_path
 
 
 def intestazione_flowables():
@@ -58,29 +57,25 @@ def intestazione_flowables():
     col_sx = usable_w - col_dx
 
     logo_riga = None
-    logo_path = (ente.logo_path or "").strip() if ente else ""
-    if logo_path:
-        pth = Path(logo_path)
-        if not pth.is_absolute():
-            pth = Path(current_app.instance_path) / pth
-        if pth.is_file():
-            try:
-                img = Image(str(pth), width=3 * cm, height=2 * cm, kind="proportional")
-                logo_riga = Table([[img]], colWidths=[usable_w])
-                logo_riga.setStyle(
-                    TableStyle(
-                        [
-                            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-                            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                            ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                            ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-                            ("TOPPADDING", (0, 0), (-1, -1), 0),
-                            ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-                        ]
-                    )
+    pth = logo_ente_path()
+    if pth is not None:
+        try:
+            img = Image(str(pth), width=3 * cm, height=2 * cm, kind="proportional")
+            logo_riga = Table([[img]], colWidths=[usable_w])
+            logo_riga.setStyle(
+                TableStyle(
+                    [
+                        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                        ("TOPPADDING", (0, 0), (-1, -1), 0),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                    ]
                 )
-            except OSError:
-                pass
+            )
+        except OSError:
+            pass
 
     left_cell: list = []
     left_cell.append(Paragraph("<b>Economo</b>", st_eco_lab))

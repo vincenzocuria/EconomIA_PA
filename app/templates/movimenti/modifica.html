@@ -2,9 +2,23 @@
 {% block title %}{{ titolo }} — EconomIA_PA{% endblock %}
 {% block content %}
 <h1 class="h4 mb-3">{{ titolo }}</h1>
-<form method="post" enctype="multipart/form-data" class="card border-0 shadow-sm p-3 p-md-4">
+<form method="post" enctype="multipart/form-data" class="card border-0 shadow-sm p-3 p-md-4" id="form-movimento"
+      data-anno="{{ anno }}"
+      data-nuovo="{{ '1' if is_nuovo else '0' }}"
+      data-lock-numero="{{ '0' if is_nuovo else '1' }}"
+      data-prossimo-url="{{ prossimo_url }}"
+      data-ac-beneficiari="{{ ac_beneficiari_url }}"
+      data-sezionali-default='{{ sezionali_default_json|safe }}'>
   {{ form.hidden_tag() }}
   <div class="row g-3">
+    <div class="col-md-3">
+      {{ form.sezionale_id.label(class="form-label") }}{{ form.sezionale_id(class="form-select") }}
+      <div class="form-text"><a href="{{ url_for('sezionali.lista') }}">Gestisci sezionali</a></div>
+    </div>
+    <div class="col-md-3">
+      {{ form.numero_progressivo.label(class="form-label") }}{{ form.numero_progressivo(class="form-control") }}
+      <div class="form-text">Proposto in automatico; puoi modificarlo a mano.</div>
+    </div>
     <div class="col-md-3">{{ form.data_movimento.label(class="form-label") }}{{ form.data_movimento(class="form-control") }}</div>
     <div class="col-md-3">{{ form.ora_movimento.label(class="form-label") }}{{ form.ora_movimento(class="form-control", placeholder="es. 14:30") }}</div>
     <div class="col-md-3">{{ form.tipo.label(class="form-label") }}{{ form.tipo(class="form-select") }}</div>
@@ -12,12 +26,19 @@
     <div class="col-12">{{ form.causale.label(class="form-label") }}{{ form.causale(class="form-control", rows=2) }}</div>
     <div class="col-md-6">{{ form.beneficiario_fornitore.label(class="form-label") }}{{ form.beneficiario_fornitore(class="form-control") }}</div>
     <div class="col-md-6">{{ form.cf_piva.label(class="form-label") }}{{ form.cf_piva(class="form-control") }}</div>
-    <div class="col-md-6">{{ form.buono_id.label(class="form-label") }}{{ form.buono_id(class="form-select") }}</div>
-    <div class="col-md-6">{{ form.modalita_pagamento.label(class="form-label") }}{{ form.modalita_pagamento(class="form-control") }}</div>
-    <div class="col-md-6">{{ form.filiale_id.label(class="form-label") }}{{ form.filiale_id(class="form-select") }}
-      <div class="form-text"><a href="{{ url_for('filiali_banca.lista') }}">Gestisci filiali</a></div>
+    <div class="col-md-6">
+      {{ form.buono_id.label(class="form-label") }}{{ form.buono_id(class="form-select") }}
+      <div class="form-text">Solo se il buono esiste già. Per un’uscita nuova ti verrà proposto dopo il salvataggio.</div>
     </div>
-    <div class="col-md-6">{{ form.rif_ricevuta.label(class="form-label") }}{{ form.rif_ricevuta(class="form-control") }}</div>
+    <div class="col-md-6">{{ form.modalita_pagamento.label(class="form-label") }}{{ form.modalita_pagamento(class="form-control", placeholder="contanti") }}</div>
+    <div id="blocco-banca" class="col-12">
+      <div class="row g-3">
+        <div class="col-md-6">{{ form.filiale_id.label(class="form-label") }}{{ form.filiale_id(class="form-select") }}
+          <div class="form-text"><a href="{{ url_for('filiali_banca.lista') }}">Gestisci filiali</a></div>
+        </div>
+        <div class="col-md-6">{{ form.rif_ricevuta.label(class="form-label") }}{{ form.rif_ricevuta(class="form-control") }}</div>
+      </div>
+    </div>
     <div class="col-md-6">
       {{ form.allegato_ricevuta.label(class="form-label") }}
       {{ form.allegato_ricevuta(class="form-control") }}
@@ -69,5 +90,10 @@
 {% endif %}
 
 <p class="small text-muted mt-3">Per rettifiche contabili usare tipo «rettifica» con importo firmato (+/−) coerente con le istruzioni interne.</p>
-<p class="small text-muted">Prelievi e versamenti: scegliere la filiale, indicare il riferimento ricevuta e allegare il file qui (oppure dalla sezione Allegati).</p>
+<p class="small text-muted">Filiale e riferimento ricevuta compaiono solo per prelievi e versamenti bancari.</p>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/movimento_form.js') }}"></script>
+<script src="{{ url_for('static', filename='js/anagrafica_autocomplete.js') }}"></script>
+<script src="{{ url_for('static', filename='js/anagrafica_form_bind.js') }}"></script>
 {% endblock %}

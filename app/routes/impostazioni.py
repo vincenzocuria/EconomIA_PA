@@ -1,5 +1,4 @@
 from datetime import date
-from pathlib import Path
 
 from flask import Blueprint, abort, flash, redirect, render_template, request, send_file, url_for
 from flask_login import login_required
@@ -12,6 +11,7 @@ from app.models.cassetto import SaldoAnnuale
 from app.models.economo import EconomoSettings
 from app.models.ente import EnteSettings
 from app.services.audit_log import scrivi_audit
+from app.services.logo_ente import logo_ente_path
 from app.services.upload_allegato import estensione_consentita, salva_upload
 
 bp = Blueprint("impostazioni", __name__, url_prefix="/impostazioni")
@@ -24,31 +24,12 @@ _LOGO_PREVIEW_MIME = {
 }
 
 
-def _logo_file_assoluto() -> Path | None:
-    row = db.session.get(EnteSettings, 1)
-    if not row or not (row.logo_path or "").strip():
-        return None
-    rel = row.logo_path.strip().replace("\\", "/")
-    if ".." in Path(rel).parts or rel.startswith("/"):
-        return None
-    root = INSTANCE_DIR.resolve()
-    path = (INSTANCE_DIR / rel).resolve()
-    try:
-        path.relative_to(root)
-    except ValueError:
-        return None
-    if not path.is_file():
-        return None
-    ext = path.suffix.lower().lstrip(".")
-    if ext not in _LOGO_PREVIEW_MIME:
-        return None
-    return path
-
-
 @bp.route("/ente/logo-preview")
 @login_required
 def logo_preview():
-    path = _logo_file_assoluto()
+    path = logo_ente_path()
+    if path is not None and path.suffix.lower().lstrip(".") not in _LOGO_PREVIEW_MIME:
+        path = None
     if path is None:
         abort(404)
     ext = path.suffix.lower().lstrip(".")

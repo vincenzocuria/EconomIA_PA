@@ -6,7 +6,7 @@ from flask_login import login_required
 
 from app.models.buono import BuonoEconomale
 from app.models.cassetto import SaldoAnnuale
-from app.models.movimento import Movimento, StatoMovimento
+from app.models.movimento import Movimento
 from app.models.verbale_verifica import VerbaleVerifica
 from app.services.alerts import prossima_scadenza_verbale, raccogli_alert, trimestre_corrente, ultimo_backup
 from app.services.cassa import (
@@ -15,6 +15,8 @@ from app.services.cassa import (
     totale_entrate,
     totale_uscite,
 )
+from app.services.dashboard_charts import dati_grafici_dashboard
+from app.services.dashboard_todo import cose_da_fare
 
 bp = Blueprint("main", __name__)
 
@@ -32,13 +34,6 @@ def dashboard():
     saldo_conto = saldo_conto_calcolato(anno, ini_conto)
     n_mov = Movimento.query.filter_by(anno=anno).count()
     n_buoni = BuonoEconomale.query.filter_by(anno=anno).count()
-    allegati_mancanti = 0
-    da_giustificare_n = 0
-    for m in Movimento.query.filter_by(anno=anno).filter(Movimento.stato != StatoMovimento.stornato):
-        if m.allegati.count() == 0:
-            allegati_mancanti += 1
-        if m.da_giustificare:
-            da_giustificare_n += 1
     ultimo_v = (
         VerbaleVerifica.query.filter_by(anno=anno)
         .order_by(VerbaleVerifica.data_verbale.desc(), VerbaleVerifica.numero.desc())
@@ -51,7 +46,9 @@ def dashboard():
             f"{ultimo_v.data_verbale.strftime('%d/%m/%Y')}"
         )
     recenti = Movimento.query.filter_by(anno=anno).order_by(Movimento.created_at.desc()).limit(8).all()
-    alert = raccogli_alert(anno)
+    todo = cose_da_fare(anno)
+    alert_extra = [a for a in raccogli_alert(anno) if a["livello"] in ("danger", "secondary")]
+    charts = dati_grafici_dashboard(anno, ini_cassa)
     y, t = trimestre_corrente()
     scad = prossima_scadenza_verbale(anno)
     return render_template(
@@ -65,13 +62,12 @@ def dashboard():
         tot_uscite=totale_uscite(anno),
         n_mov=n_mov,
         n_buoni=n_buoni,
-        allegati_mancanti=allegati_mancanti,
-        da_giustificare_n=da_giustificare_n,
-        ultimo_verbale=ultimo_v,
         ultimo_verbale_label=ultimo_verbale_label,
         prossima_scadenza=scad,
         trimestre_corrente=t if anno == y else 4,
         movimenti_recenti=recenti,
-        alert=alert,
+        todo=todo,
+        alert_extra=alert_extra,
+        charts=charts,
         ultimo_backup=ultimo_backup(),
     )

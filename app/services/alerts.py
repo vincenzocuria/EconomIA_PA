@@ -9,6 +9,7 @@ from app.models.movimento import Movimento, StatoMovimento, TipoMovimento, trime
 from app.models.verbale import VerbaleTrimestrale
 from app.models.verbale_verifica import VerbaleVerifica
 from app.services.cassa import saldo_cassa_calcolato, saldo_conto_calcolato
+from app.services.numero_display import formato_numero_sezionale
 
 
 def trimestre_corrente(d: date | None = None) -> tuple[int, int]:
@@ -60,7 +61,7 @@ def raccogli_alert(anno: int) -> list[dict]:
             if len(dettaglio) > 60:
                 dettaglio = dettaglio[:57] + "…"
             importo_txt = f"{float(m.importo):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-            testo = f"Movimento {m.numero_progressivo:04d} da giustificare ({importo_txt} €"
+            testo = f"Movimento {formato_numero_sezionale(m)} da giustificare ({importo_txt} €"
             if dettaglio:
                 testo += f" — {dettaglio}"
             testo += ")."
@@ -69,21 +70,21 @@ def raccogli_alert(anno: int) -> list[dict]:
             out.append(
                 {
                     "livello": "warning",
-                    "testo": f"Movimento {m.numero_progressivo:04d} in uscita senza allegato.",
+                    "testo": f"Movimento {formato_numero_sezionale(m)} in uscita senza allegato.",
                 }
             )
         if m.tipo == TipoMovimento.versamento_banca and m.allegati.count() == 0:
             out.append(
                 {
                     "livello": "warning",
-                    "testo": f"Movimento {m.numero_progressivo:04d} versamento in banca senza allegato (ricevuta).",
+                    "testo": f"Movimento {formato_numero_sezionale(m)} versamento in banca senza allegato (ricevuta).",
                 }
             )
         if m.tipo == TipoMovimento.prelievo_banca and m.allegati.count() == 0:
             out.append(
                 {
                     "livello": "warning",
-                    "testo": f"Movimento {m.numero_progressivo:04d} prelievo banca senza allegato (ricevuta).",
+                    "testo": f"Movimento {formato_numero_sezionale(m)} prelievo banca senza allegato (ricevuta).",
                 }
             )
         if m.tipo in (TipoMovimento.uscita, TipoMovimento.entrata):
@@ -91,7 +92,7 @@ def raccogli_alert(anno: int) -> list[dict]:
                 out.append(
                     {
                         "livello": "secondary",
-                        "testo": f"Movimento {m.numero_progressivo:04d}: documento fiscale non indicato.",
+                        "testo": f"Movimento {formato_numero_sezionale(m)}: documento fiscale non indicato.",
                     }
                 )
 
@@ -100,7 +101,7 @@ def raccogli_alert(anno: int) -> list[dict]:
             out.append(
                 {
                     "livello": "info",
-                    "testo": f"Buono {b.numero_progressivo:04d} non in stato chiuso.",
+                    "testo": f"Buono {formato_numero_sezionale(b)} non in stato chiuso.",
                 }
             )
 

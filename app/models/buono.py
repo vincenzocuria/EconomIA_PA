@@ -16,6 +16,7 @@ class BuonoEconomale(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     anno = db.Column(db.Integer, nullable=False, index=True)
+    sezionale_id = db.Column(db.Integer, db.ForeignKey("sezionale.id"), nullable=True, index=True)
     numero_progressivo = db.Column(db.Integer, nullable=False)
     data_buono = db.Column(db.Date, nullable=False)
     richiedente = db.Column(db.String(300), default="")
@@ -29,6 +30,11 @@ class BuonoEconomale(db.Model):
     created_at = db.Column(db.DateTime, server_default=db.func.now())
     updated_at = db.Column(db.DateTime, server_default=db.func.now(), onupdate=db.func.now())
 
+    sezionale = db.relationship(
+        "Sezionale",
+        foreign_keys=[sezionale_id],
+        lazy="joined",
+    )
     movimenti = db.relationship(
         "Movimento",
         foreign_keys="Movimento.buono_id",
@@ -37,5 +43,10 @@ class BuonoEconomale(db.Model):
     )
 
     __table_args__ = (
-        db.UniqueConstraint("anno", "numero_progressivo", name="uq_buono_anno_num"),
+        db.UniqueConstraint(
+            "anno",
+            "sezionale_id",
+            "numero_progressivo",
+            name="uq_buono_anno_sez_num",
+        ),
     )
