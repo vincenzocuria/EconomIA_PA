@@ -57,3 +57,7 @@ tr[data-href]:hover > * {
   font-size: 0.78rem;
   color: var(--bs-secondary-color);
 }
+.text-bg-cassa-basso {
+  color: #fff !important;
+  background-color: #fd7e14 !important;
+}

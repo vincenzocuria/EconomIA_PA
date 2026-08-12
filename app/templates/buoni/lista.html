@@ -26,6 +26,15 @@
     </a>
   </div>
   <div class="col-6 col-md-3">
+    <a class="card border-0 shadow-sm h-100 text-decoration-none text-body{% if filtri.rapido == 'da_firmare' %} border border-primary{% endif %}"
+       href="{{ url_for('buoni.lista', anno=anno, rapido='da_firmare') }}">
+      <div class="card-body py-3">
+        <div class="text-muted small">Da firmare</div>
+        <div class="fs-5 fw-semibold {% if senza_firma_ids %}text-warning{% endif %}">{{ senza_firma_ids|length }}</div>
+      </div>
+    </a>
+  </div>
+  <div class="col-6 col-md-3">
     <a class="card border-0 shadow-sm h-100 text-decoration-none text-body{% if filtri.rapido == 'da_chiudere' %} border border-primary{% endif %}"
        href="{{ url_for('buoni.lista', anno=anno, rapido='da_chiudere') }}">
       <div class="card-body py-3">
@@ -34,18 +43,18 @@
       </div>
     </a>
   </div>
+</div>
+<div class="row g-3 mb-4">
   <div class="col-6 col-md-3">
     <a class="card border-0 shadow-sm h-100 text-decoration-none text-body{% if filtri.stato == 'chiuso' %} border border-primary{% endif %}"
        href="{{ url_for('buoni.lista', anno=anno, stato='chiuso') }}">
       <div class="card-body py-3">
         <div class="text-muted small">Chiusi</div>
-        <div class="fs-5 fw-semibold">{{ kpi.n_chiusi }}</div>
+        <div class="fs-6 fw-semibold">{{ kpi.n_chiusi }}</div>
       </div>
     </a>
   </div>
-</div>
-<div class="row g-3 mb-4">
-  <div class="col-md-4 col-6">
+  <div class="col-6 col-md-3">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body py-3">
         <div class="text-muted small">Totale autorizzato</div>
@@ -53,7 +62,7 @@
       </div>
     </div>
   </div>
-  <div class="col-md-4 col-6">
+  <div class="col-6 col-md-3">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body py-3">
         <div class="text-muted small">Totale speso</div>
@@ -61,7 +70,7 @@
       </div>
     </div>
   </div>
-  <div class="col-md-4 col-12">
+  <div class="col-6 col-md-3">
     <div class="card border-0 shadow-sm h-100">
       <div class="card-body py-3">
         <div class="text-muted small">Residuo (aut. − speso)</div>
@@ -116,6 +125,7 @@
       Filtri attivi
       {% if filtri.rapido == 'aperti' %}· aperti{% endif %}
       {% if filtri.rapido == 'da_chiudere' %}· da chiudere{% endif %}
+      {% if filtri.rapido == 'da_firmare' %}· da firmare{% endif %}
       {% if filtri.stato %}· stato {{ filtri.stato }}{% endif %}
       {% if filtri.q %}· «{{ filtri.q }}»{% endif %}
       — {{ rows|length }} risultati
@@ -134,7 +144,7 @@
       <tr>
         <td>{{ b|formato_num }}</td>
         <td>{{ b.data_buono.strftime('%d/%m/%Y') }}</td>
-        <td>{{ b.stato.value }}</td>
+        <td>{{ b.stato.value }}{% if b.id in senza_firma_ids %} <span class="badge text-bg-warning">Da firmare</span>{% endif %}</td>
         <td>{{ b.importo_autorizzato|eur }}</td>
         <td>{{ b.importo_speso|eur }}</td>
         <td class="text-truncate" style="max-width:10rem">{{ b.richiedente }}</td>

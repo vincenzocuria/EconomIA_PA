@@ -11,6 +11,11 @@ from app.models.cassetto import SaldoAnnuale
 from app.models.economo import EconomoSettings
 from app.models.ente import EnteSettings
 from app.services.audit_log import scrivi_audit
+from app.services.documenti_economo import (
+    mime_documento,
+    path_documento_economo,
+    salva_documento_economo,
+)
 from app.services.logo_ente import logo_ente_path
 from app.services.upload_allegato import estensione_consentita, salva_upload
 
@@ -68,13 +73,47 @@ def ente():
     return render_template("impostazioni/ente.html", form=form, row=row)
 
 
+@bp.route("/economo/determina")
+@login_required
+def economo_determina():
+    path = path_documento_economo("determina_path")
+    if path is None:
+        abort(404)
+    return send_file(path, mimetype=mime_documento(path), as_attachment=False, download_name=path.name)
+
+
+@bp.route("/economo/regolamento")
+@login_required
+def economo_regolamento():
+    path = path_documento_economo("regolamento_path")
+    if path is None:
+        abort(404)
+    return send_file(path, mimetype=mime_documento(path), as_attachment=False, download_name=path.name)
+
+
 @bp.route("/economo", methods=["GET", "POST"])
 @login_required
 def economo():
     row = EconomoSettings.query.get_or_404(1)
     form = EconomoForm(obj=row)
     if form.validate_on_submit():
-        form.populate_obj(row)
+        row.cognome = form.cognome.data or ""
+        row.nome = form.nome.data or ""
+        row.codice_fiscale = form.codice_fiscale.data or ""
+        row.qualifica = form.qualifica.data or ""
+        row.incarico_dal = form.incarico_dal.data
+        row.delibera_nomina = form.delibera_nomina.data or ""
+        row.telefono = form.telefono.data or ""
+        row.email = form.email.data or ""
+        row.note = form.note.data or ""
+
+        rel_det = salva_documento_economo(form.determina.data, "determina")
+        if rel_det:
+            row.determina_path = rel_det
+        rel_reg = salva_documento_economo(form.regolamento.data, "regolamento")
+        if rel_reg:
+            row.regolamento_path = rel_reg
+
         db.session.commit()
         scrivi_audit("economo", 1, "aggiornamento", {})
         flash("Dati economo salvati.", "success")

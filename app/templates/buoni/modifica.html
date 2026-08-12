@@ -6,7 +6,7 @@
 {% if da_movimento %}
 <div class="alert alert-info small">
   Campi presi dal movimento <strong>{{ da_movimento|formato_num }}</strong>.
-  Completa <strong>richiedente</strong> e <strong>ufficio</strong>, salva, poi scarica il modulo e ricaricalo firmato.
+  Completa <strong>richiedente</strong>, <strong>ufficio</strong> e <strong>responsabile</strong>, salva, poi scarica il modulo e ricaricalo firmato.
 </div>
 {% elif b %}
 <div class="alert alert-light border small">
@@ -37,8 +37,12 @@
     <div class="col-md-4">{{ form.importo_autorizzato.label(class="form-label") }}{{ form.importo_autorizzato(class="form-control") }}</div>
     <div class="col-md-4">{{ form.importo_speso.label(class="form-label") }}{{ form.importo_speso(class="form-control") }}</div>
     <div class="col-md-4">{{ form.beneficiario.label(class="form-label") }}{{ form.beneficiario(class="form-control") }}</div>
-    <div class="col-md-6">{{ form.richiedente.label(class="form-label") }}{{ form.richiedente(class="form-control") }}</div>
-    <div class="col-md-6">{{ form.ufficio_richiedente.label(class="form-label") }}{{ form.ufficio_richiedente(class="form-control") }}</div>
+    <div class="col-md-4">{{ form.richiedente.label(class="form-label") }}{{ form.richiedente(class="form-control") }}</div>
+    <div class="col-md-4">{{ form.ufficio_richiedente.label(class="form-label") }}{{ form.ufficio_richiedente(class="form-control") }}</div>
+    <div class="col-md-4">
+      {{ form.responsabile_ufficio.label(class="form-label") }}{{ form.responsabile_ufficio(class="form-control") }}
+      <div class="form-text">Se coincide col richiedente, sul modulo c’è un’unica firma. <a href="{{ url_for('anagrafiche.lista') }}">Anagrafiche</a></div>
+    </div>
     <div class="col-12">{{ form.causale.label(class="form-label") }}{{ form.causale(class="form-control", rows=3) }}</div>
     <div class="col-12">{{ form.note.label(class="form-label") }}{{ form.note(class="form-control", rows=2) }}</div>
     {% if b %}

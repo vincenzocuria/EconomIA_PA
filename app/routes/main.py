@@ -15,8 +15,10 @@ from app.services.cassa import (
     totale_entrate,
     totale_uscite,
 )
+from app.services.cassa_livello import badge_cassa
 from app.services.dashboard_charts import dati_grafici_dashboard
 from app.services.dashboard_todo import cose_da_fare
+from app.services.ultimo_banca import ultimo_prelievo, ultimo_versamento
 
 bp = Blueprint("main", __name__)
 
@@ -56,6 +58,7 @@ def dashboard():
         anno=anno,
         saldo_cassa_iniziale=ini_cassa,
         saldo_cassa_attuale=saldo_cassa,
+        badge_cassa_attuale=badge_cassa(saldo_cassa),
         saldo_conto_iniziale=ini_conto,
         saldo_conto_attuale=saldo_conto,
         tot_entrate=totale_entrate(anno),
@@ -66,6 +69,8 @@ def dashboard():
         prossima_scadenza=scad,
         trimestre_corrente=t if anno == y else 4,
         movimenti_recenti=recenti,
+        ultimo_prelievo=ultimo_prelievo(anno),
+        ultimo_versamento=ultimo_versamento(anno),
         todo=todo,
         alert_extra=alert_extra,
         charts=charts,

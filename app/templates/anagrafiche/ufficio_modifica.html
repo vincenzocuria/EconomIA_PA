@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ titolo }} — EconomIA_PA{% endblock %}
+{% block content %}
+<h1 class="h4 mb-3">{{ titolo }}</h1>
+<form method="post" class="card border-0 shadow-sm p-3 p-md-4">
+  {{ form.hidden_tag() }}
+  <div class="row g-3">
+    <div class="col-md-6">{{ form.denominazione.label(class="form-label") }}{{ form.denominazione(class="form-control") }}</div>
+    <div class="col-md-6">{{ form.responsabile.label(class="form-label") }}{{ form.responsabile(class="form-control") }}</div>
+  </div>
+  <div class="mt-4 d-flex gap-2">
+    {{ form.submit(class="btn btn-primary") }}
+    <a class="btn btn-outline-secondary" href="{{ url_for('anagrafiche.lista', tab='uffici') }}">Annulla</a>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/anagrafica_autocomplete.js') }}"></script>
+<script>
+(function () {
+  if (!window.egAnagraficaAutocomplete) return;
+  var el = document.querySelector('[name="responsabile"]');
+  if (el) {
+    window.egAnagraficaAutocomplete.bind(el, {
+      url: "{{ url_for('anagrafiche_api.richiedenti') }}"
+    });
+  }
+})();
+</script>
+{% endblock %}

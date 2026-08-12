@@ -7,18 +7,30 @@
     <form class="d-flex align-items-center gap-2" method="get">
       <input type="number" class="form-control form-control-sm" name="anno" value="{{ anno }}" style="width:6rem">
       {% if filtro_da_giustificare %}<input type="hidden" name="da_giustificare" value="1">{% endif %}
+      {% if filtro_senza_allegato %}<input type="hidden" name="senza_allegato" value="1">{% endif %}
       <button class="btn btn-sm btn-outline-secondary" type="submit">Anno</button>
     </form>
+    {% if filtro_da_giustificare or filtro_senza_allegato %}
+    <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('movimenti.lista', anno=anno) }}">Tutti i movimenti</a>
+    {% endif %}
     {% if filtro_da_giustificare %}
-    <a class="btn btn-sm btn-warning" href="{{ url_for('movimenti.lista', anno=anno) }}">Tutti i movimenti</a>
+    <a class="btn btn-sm btn-warning" href="{{ url_for('movimenti.lista', anno=anno, da_giustificare=1) }}">Da giustificare</a>
     {% else %}
     <a class="btn btn-sm btn-outline-warning" href="{{ url_for('movimenti.lista', anno=anno, da_giustificare=1) }}">Da giustificare</a>
+    {% endif %}
+    {% if filtro_senza_allegato %}
+    <a class="btn btn-sm btn-warning" href="{{ url_for('movimenti.lista', anno=anno, senza_allegato=1) }}">Senza allegato</a>
+    {% else %}
+    <a class="btn btn-sm btn-outline-warning" href="{{ url_for('movimenti.lista', anno=anno, senza_allegato=1) }}">Senza allegato</a>
     {% endif %}
     <a class="btn btn-sm btn-primary" href="{{ url_for('movimenti.nuovo', anno=anno) }}">Nuovo</a>
   </div>
 </div>
 {% if filtro_da_giustificare %}
 <p class="small text-warning mb-2">Filtro attivo: solo movimenti da giustificare (anticipo / scontrino in arrivo).</p>
+{% endif %}
+{% if filtro_senza_allegato %}
+<p class="small text-warning mb-2">Filtro attivo: uscite / prelievi / versamenti banca senza allegato (scontrino o ricevuta).</p>
 {% endif %}
 <div class="table-responsive card border-0 shadow-sm">
   <table class="table table-sm table-hover mb-0">
@@ -29,7 +41,7 @@
     </thead>
     <tbody>
       {% for m in rows %}
-      <tr data-href="{{ url_for('movimenti.dettaglio', id=m.id) }}" tabindex="0" role="link" aria-label="Dettaglio movimento {{ m|formato_num }}"{% if m.da_giustificare %} class="table-warning"{% endif %}>
+      <tr data-href="{{ url_for('movimenti.dettaglio', id=m.id) }}" tabindex="0" role="link" aria-label="Dettaglio movimento {{ m|formato_num }}"{% if m.da_giustificare or filtro_senza_allegato %} class="table-warning"{% endif %}>
         <td>{{ m|formato_num }}</td>
         <td>{{ m|data_ora_cassa }}</td>
         <td>{{ m|tipo_mov_label }}</td>
@@ -38,6 +50,9 @@
           {{ m.stato.value }}
           {% if m.da_giustificare %}
           <span class="badge text-bg-warning ms-1">Da giustificare</span>
+          {% endif %}
+          {% if filtro_senza_allegato %}
+          <span class="badge text-bg-warning ms-1">Senza allegato</span>
           {% endif %}
         </td>
         <td>{{ m.trimestre }}</td>
@@ -53,6 +68,8 @@
       <tr><td colspan="8" class="p-4 text-muted">
         {% if filtro_da_giustificare %}
         Nessun movimento da giustificare.
+        {% elif filtro_senza_allegato %}
+        Nessuna uscita/banca senza allegato.
         {% else %}
         Nessun movimento. I movimenti non si cancellano: usare storno o rettifica.
         {% endif %}

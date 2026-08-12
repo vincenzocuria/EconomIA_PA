@@ -29,7 +29,13 @@ def _riga_provincia(ente: EnteSettings | None) -> str:
     return f"(PROVINCIA DI {prov})".upper()
 
 
-def applica_intestazione_ente(doc: Document) -> None:
+def applica_intestazione_ente(
+    doc: Document,
+    *,
+    logo_cm: float = 3.0,
+    font_comune: float = 12,
+    font_provincia: float = 11,
+) -> None:
     """Header come nel modulo ufficiale: logo centrato + comune + provincia."""
     ente = db.session.get(EnteSettings, 1)
     logo = logo_ente_path()
@@ -40,21 +46,27 @@ def applica_intestazione_ente(doc: Document) -> None:
         header = section.header
         p0 = header.paragraphs[0]
         p0.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p0.paragraph_format.space_before = Pt(0)
+        p0.paragraph_format.space_after = Pt(0)
         p0.clear()
         if logo is not None:
             run = p0.add_run()
-            run.add_picture(str(logo), width=Cm(3))
+            run.add_picture(str(logo), width=Cm(logo_cm))
 
         if comune:
             p = header.add_paragraph()
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
             r = p.add_run(comune)
             r.bold = True
-            r.font.size = Pt(12)
+            r.font.size = Pt(font_comune)
 
         if provincia:
             p = header.add_paragraph()
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(2)
             r = p.add_run(provincia)
             r.bold = True
-            r.font.size = Pt(11)
+            r.font.size = Pt(font_provincia)

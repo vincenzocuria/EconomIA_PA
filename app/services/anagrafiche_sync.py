@@ -4,32 +4,55 @@ from app.extensions import db
 from app.models.anagrafica_beneficiario import AnagraficaBeneficiario
 from app.models.anagrafica_richiedente import AnagraficaRichiedente
 from app.models.anagrafica_ufficio import AnagraficaUfficio
-from app.services.anagrafiche_testo import normalizza_chiave, pulisci_testo
+from app.services.anagrafiche_testo import (
+    normalizza_chiave,
+    normalizza_denominazione,
+    normalizza_nome_persona,
+    pulisci_testo,
+)
 
 
-def salva_ufficio(denominazione: str | None) -> AnagraficaUfficio | None:
-    nome = pulisci_testo(denominazione)
+def salva_ufficio(
+    denominazione: str | None,
+    responsabile: str | None = None,
+    *,
+    collega_responsabile: bool = True,
+) -> AnagraficaUfficio | None:
+    nome = normalizza_denominazione(denominazione)
     if not nome:
         return None
     chiave = normalizza_chiave(nome)
+    resp = normalizza_nome_persona(responsabile)
     row = AnagraficaUfficio.query.filter_by(denominazione_norm=chiave).first()
     if row is None:
-        row = AnagraficaUfficio(denominazione=nome, denominazione_norm=chiave)
+        row = AnagraficaUfficio(
+            denominazione=nome,
+            denominazione_norm=chiave,
+            responsabile=resp,
+        )
         db.session.add(row)
     else:
         row.denominazione = nome
+        if resp:
+            row.responsabile = resp
+    if resp and collega_responsabile:
+        # Non ri-entra in salva_ufficio: evita duplicati in sessione non flushed
+        salva_richiedente(resp, nome, collega_ufficio=False)
     return row
 
 
 def salva_richiedente(
     nome: str | None,
     ufficio: str | None = None,
+    responsabile: str | None = None,
+    *,
+    collega_ufficio: bool = True,
 ) -> AnagraficaRichiedente | None:
-    valore = pulisci_testo(nome)
+    valore = normalizza_nome_persona(nome)
     if not valore:
         return None
     chiave = normalizza_chiave(valore)
-    uff = pulisci_testo(ufficio)
+    uff = normalizza_denominazione(ufficio)
     row = AnagraficaRichiedente.query.filter_by(nome_norm=chiave).first()
     if row is None:
         row = AnagraficaRichiedente(
@@ -42,8 +65,10 @@ def salva_richiedente(
         row.nome = valore
         if uff:
             row.ufficio_default = uff
-    if uff:
-        salva_ufficio(uff)
+    if uff and collega_ufficio:
+        salva_ufficio(uff, responsabile, collega_responsabile=False)
+        if responsabile:
+            salva_richiedente(responsabile, uff, collega_ufficio=False)
     return row
 
 
@@ -51,7 +76,7 @@ def salva_beneficiario(
     denominazione: str | None,
     cf_piva: str | None = None,
 ) -> AnagraficaBeneficiario | None:
-    nome = pulisci_testo(denominazione)
+    nome = normalizza_denominazione(denominazione)
     if not nome:
         return None
     chiave = normalizza_chiave(nome)
@@ -71,9 +96,14 @@ def salva_beneficiario(
     return row
 
 
-def sync_da_buono(richiedente: str | None, ufficio: str | None, beneficiario: str | None) -> None:
-    salva_richiedente(richiedente, ufficio)
-    salva_ufficio(ufficio)
+def sync_da_buono(
+    richiedente: str | None,
+    ufficio: str | None,
+    beneficiario: str | None,
+    responsabile: str | None = None,
+) -> None:
+    salva_richiedente(richiedente, ufficio, responsabile)
+    salva_ufficio(ufficio, responsabile)
     salva_beneficiario(beneficiario)
 
 

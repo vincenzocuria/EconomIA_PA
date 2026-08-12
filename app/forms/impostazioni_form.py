@@ -32,6 +32,14 @@ class EconomoForm(FlaskForm):
     telefono = StringField("Telefono")
     email = StringField("Email")
     note = TextAreaField("Note")
+    determina = FileField(
+        "Determina (PDF/immagine)",
+        validators=[Optional(), FileAllowed(["pdf", "png", "jpg", "jpeg", "webp"], "PDF o immagini.")],
+    )
+    regolamento = FileField(
+        "Regolamento comunale (PDF/immagine)",
+        validators=[Optional(), FileAllowed(["pdf", "png", "jpg", "jpeg", "webp"], "PDF o immagini.")],
+    )
     submit = SubmitField("Salva dati economo")
 
 

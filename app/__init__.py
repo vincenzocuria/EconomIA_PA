@@ -79,6 +79,7 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes.filiali_banca import bp as filiali_banca_bp
     from app.routes.sezionali import bp as sezionali_bp
     from app.routes.anagrafiche_api import bp as anagrafiche_api_bp
+    from app.routes.anagrafiche import bp as anagrafiche_bp
     from app.routes.progressivi_api import bp as progressivi_api_bp
     from app.routes.verbali import bp as verbali_bp
 
@@ -94,12 +95,14 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(sezionali_bp)
     app.register_blueprint(progressivi_api_bp)
     app.register_blueprint(anagrafiche_api_bp)
+    app.register_blueprint(anagrafiche_bp)
 
     with app.app_context():
         db.create_all()
         from app.services.schema_allegato import applica_schema_allegato
         from app.services.schema_anagrafiche import applica_schema_anagrafiche
         from app.services.schema_cassa import applica_schema_cassa
+        from app.services.schema_economo import applica_schema_economo
         from app.services.schema_filiale import applica_schema_filiale_banca
         from app.services.schema_movimento import applica_patch_movimento
         from app.services.schema_sezionale import applica_schema_sezionale
@@ -110,6 +113,7 @@ def create_app(config_name: str | None = None) -> Flask:
         applica_schema_allegato()
         applica_schema_verbale_verifica()
         applica_schema_cassa()
+        applica_schema_economo()
         applica_schema_sezionale()
         applica_schema_anagrafiche()
         _ensure_default_user(app)

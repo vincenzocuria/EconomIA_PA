@@ -14,6 +14,7 @@ from app.services.anagrafiche_sync import sync_da_buono
 from app.services.audit_log import scrivi_audit
 from app.services.buoni_filtri import filtri_attivi, parametri_filtro, query_buoni
 from app.services.buoni_kpi import kpi_buoni_anno
+from app.services.buoni_senza_firma import ids_senza_firma
 from app.services.buono_da_movimento import collega_movimento_a_buono, valori_precompilati_da_movimento
 from app.services.docx_rimborso import genera_docx_rimborso
 from app.services.pdf_buono import genera_pdf_buono
@@ -35,6 +36,7 @@ def _popola_buono(form: BuonoForm, b: BuonoEconomale | None):
     form.data_buono.data = b.data_buono
     form.richiedente.data = b.richiedente
     form.ufficio_richiedente.data = b.ufficio_richiedente
+    form.responsabile_ufficio.data = b.responsabile_ufficio or ""
     form.causale.data = b.causale
     form.importo_autorizzato.data = b.importo_autorizzato
     form.importo_speso.data = b.importo_speso
@@ -58,6 +60,7 @@ def _buono_da_form(
     b.data_buono = form.data_buono.data
     b.richiedente = form.richiedente.data or ""
     b.ufficio_richiedente = form.ufficio_richiedente.data or ""
+    b.responsabile_ufficio = form.responsabile_ufficio.data or ""
     b.causale = form.causale.data or ""
     b.importo_autorizzato = form.importo_autorizzato.data
     if form.importo_speso.data is not None:
@@ -65,7 +68,12 @@ def _buono_da_form(
     b.beneficiario = form.beneficiario.data or ""
     b.stato = StatoBuono(form.stato.data)
     b.note = form.note.data or ""
-    sync_da_buono(b.richiedente, b.ufficio_richiedente, b.beneficiario)
+    sync_da_buono(
+        b.richiedente,
+        b.ufficio_richiedente,
+        b.beneficiario,
+        b.responsabile_ufficio,
+    )
     return b
 
 
@@ -93,6 +101,7 @@ def lista():
         filtri=filtri,
         filtri_on=filtri_attivi(filtri),
         kpi=kpi_buoni_anno(anno),
+        senza_firma_ids=ids_senza_firma(anno),
         stati_scelte=[(e.value, e.value) for e in StatoBuono],
         sezionali_scelte=scelte_sezionale(),
     )

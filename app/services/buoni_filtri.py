@@ -4,6 +4,7 @@ from sqlalchemy import or_
 
 from app.models.buono import BuonoEconomale, StatoBuono
 from app.services.anagrafiche_testo import pulisci_testo
+from app.services.ricerca_completa import condizione_ricerca_completa
 
 STATI_APERTI = (StatoBuono.bozza, StatoBuono.autorizzato, StatoBuono.pagato)
 STATI_DA_CHIUDERE = (StatoBuono.autorizzato, StatoBuono.pagato)
@@ -20,7 +21,7 @@ def parametri_filtro(args) -> dict:
     except (TypeError, ValueError):
         sezionale_id = 0
     rapido = (args.get("rapido") or "").strip()
-    if rapido not in ("aperti", "da_chiudere"):
+    if rapido not in ("aperti", "da_chiudere", "da_firmare"):
         rapido = ""
     return {
         "q": q,
@@ -31,28 +32,38 @@ def parametri_filtro(args) -> dict:
 
 
 def query_buoni(anno: int, filtri: dict):
-    q = BuonoEconomale.query.filter_by(anno=anno)
+    if filtri.get("rapido") == "da_firmare" and not filtri.get("stato"):
+        from app.services.buoni_senza_firma import query_senza_firma
+
+        q = query_senza_firma(anno)
+    else:
+        q = BuonoEconomale.query.filter_by(anno=anno)
+        if filtri.get("stato"):
+            q = q.filter_by(stato=StatoBuono(filtri["stato"]))
+        elif filtri.get("rapido") == "aperti":
+            q = q.filter(BuonoEconomale.stato.in_(STATI_APERTI))
+        elif filtri.get("rapido") == "da_chiudere":
+            q = q.filter(BuonoEconomale.stato.in_(STATI_DA_CHIUDERE))
+
     if filtri.get("sezionale_id"):
         q = q.filter_by(sezionale_id=filtri["sezionale_id"])
-    if filtri.get("stato"):
-        q = q.filter_by(stato=StatoBuono(filtri["stato"]))
-    elif filtri.get("rapido") == "aperti":
-        q = q.filter(BuonoEconomale.stato.in_(STATI_APERTI))
-    elif filtri.get("rapido") == "da_chiudere":
-        q = q.filter(BuonoEconomale.stato.in_(STATI_DA_CHIUDERE))
+
     testo = filtri.get("q") or ""
     if testo:
-        like = f"%{testo}%"
-        cond = [
-            BuonoEconomale.richiedente.ilike(like),
-            BuonoEconomale.ufficio_richiedente.ilike(like),
-            BuonoEconomale.beneficiario.ilike(like),
-            BuonoEconomale.causale.ilike(like),
-            BuonoEconomale.note.ilike(like),
-        ]
+        cond_testo = condizione_ricerca_completa(
+            BuonoEconomale.richiedente,
+            BuonoEconomale.ufficio_richiedente,
+            BuonoEconomale.responsabile_ufficio,
+            BuonoEconomale.beneficiario,
+            BuonoEconomale.causale,
+            BuonoEconomale.note,
+            q=testo,
+        )
         if testo.isdigit():
-            cond.append(BuonoEconomale.numero_progressivo == int(testo))
-        q = q.filter(or_(*cond))
+            num = BuonoEconomale.numero_progressivo == int(testo)
+            q = q.filter(or_(cond_testo, num) if cond_testo is not None else num)
+        elif cond_testo is not None:
+            q = q.filter(cond_testo)
     return q.order_by(BuonoEconomale.numero_progressivo.desc())
 
 

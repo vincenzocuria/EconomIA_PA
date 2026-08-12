@@ -18,6 +18,7 @@ from app.services.filiali_scelte import scelte_filiale_per_movimento
 from app.services.giustificativo import segna_giustificato
 from app.services.movimento_tipi import scelte_tipo_movimento
 from app.services.numero_display import formato_numero_sezionale
+from app.services.movimenti_senza_allegato import query_senza_allegato
 from app.services.progressivi import numero_movimento_libero, prossimo_numero_movimento
 from app.services.sezionali_scelte import (
     scelte_sezionale,
@@ -159,15 +160,22 @@ def _ctx_form(anno: int, m: Movimento | None = None) -> dict:
 @login_required
 def lista():
     anno = int(request.args.get("anno", date.today().year))
-    q = Movimento.query.filter_by(anno=anno)
-    if request.args.get("da_giustificare") == "1":
-        q = q.filter_by(da_giustificare=True)
-    rows = q.order_by(Movimento.numero_progressivo.desc()).all()
+    filtro_da_giustificare = request.args.get("da_giustificare") == "1"
+    filtro_senza_allegato = request.args.get("senza_allegato") == "1"
+    if filtro_senza_allegato:
+        q = query_senza_allegato(anno)
+    else:
+        q = Movimento.query.filter_by(anno=anno)
+        if filtro_da_giustificare:
+            q = q.filter_by(da_giustificare=True)
+        q = q.order_by(Movimento.numero_progressivo.desc())
+    rows = q.all()
     return render_template(
         "movimenti/lista.html",
         rows=rows,
         anno=anno,
-        filtro_da_giustificare=request.args.get("da_giustificare") == "1",
+        filtro_da_giustificare=filtro_da_giustificare and not filtro_senza_allegato,
+        filtro_senza_allegato=filtro_senza_allegato,
     )
 
 

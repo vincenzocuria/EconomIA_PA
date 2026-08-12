@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Anagrafiche — EconomIA_PA{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0">Anagrafiche buoni</h1>
+  <div class="d-flex gap-2">
+    {% if tab == 'uffici' %}
+    <a class="btn btn-sm btn-primary" href="{{ url_for('anagrafiche.ufficio_nuovo') }}">Nuovo ufficio</a>
+    {% else %}
+    <a class="btn btn-sm btn-primary" href="{{ url_for('anagrafiche.richiedente_nuovo') }}">Nuovo richiedente</a>
+    {% endif %}
+  </div>
+</div>
+<p class="small text-muted mb-3">
+  Salvati automaticamente dai buoni; qui puoi modificarli.
+  L’associazione richiedente → ufficio → responsabile serve alla compilazione e alle firme del modulo.
+</p>
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+    <a class="nav-link {% if tab != 'uffici' %}active{% endif %}" href="{{ url_for('anagrafiche.lista', tab='richiedenti') }}">Richiedenti</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if tab == 'uffici' %}active{% endif %}" href="{{ url_for('anagrafiche.lista', tab='uffici') }}">Uffici / responsabili</a>
+  </li>
+</ul>
+
+{% if tab == 'uffici' %}
+<div class="table-responsive card border-0 shadow-sm">
+  <table class="table table-sm table-hover mb-0">
+    <thead class="table-light">
+      <tr>
+        <th>Ufficio</th>
+        <th>Responsabile</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in uffici %}
+      <tr>
+        <td>{{ u.denominazione }}</td>
+        <td>{{ u.responsabile or "—" }}</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('anagrafiche.ufficio_modifica', id=u.id) }}">Modifica</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3" class="p-4 text-muted">Nessun ufficio. Verranno creati salvando i buoni, oppure aggiungine uno.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="table-responsive card border-0 shadow-sm">
+  <table class="table table-sm table-hover mb-0">
+    <thead class="table-light">
+      <tr>
+        <th>Richiedente</th>
+        <th>Ufficio associato</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in richiedenti %}
+      <tr>
+        <td>{{ r.nome }}</td>
+        <td>{{ r.ufficio_default or "—" }}</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('anagrafiche.richiedente_modifica', id=r.id) }}">Modifica</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3" class="p-4 text-muted">Nessun richiedente. Verranno creati salvando i buoni, oppure aggiungine uno.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

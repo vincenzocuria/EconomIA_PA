@@ -21,6 +21,7 @@ class BuonoEconomale(db.Model):
     data_buono = db.Column(db.Date, nullable=False)
     richiedente = db.Column(db.String(300), default="")
     ufficio_richiedente = db.Column(db.String(300), default="")
+    responsabile_ufficio = db.Column(db.String(300), default="")
     causale = db.Column(db.Text, default="")
     importo_autorizzato = db.Column(db.Numeric(12, 2), nullable=False, default=0)
     importo_speso = db.Column(db.Numeric(12, 2), nullable=False, default=0)

@@ -16,3 +16,5 @@ class EconomoSettings(db.Model):
     telefono = db.Column(db.String(80), default="")
     email = db.Column(db.String(200), default="")
     note = db.Column(db.Text, default="")
+    determina_path = db.Column(db.String(500), default="")
+    regolamento_path = db.Column(db.String(500), default="")

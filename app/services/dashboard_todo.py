@@ -6,18 +6,13 @@ from decimal import Decimal
 from flask import url_for
 
 from app.models.cassetto import SaldoAnnuale
-from app.models.movimento import Movimento, StatoMovimento, TipoMovimento, trimestre_da_data
+from app.models.movimento import Movimento, StatoMovimento, trimestre_da_data
 from app.models.verbale_verifica import VerbaleVerifica
 from app.services.alerts import fine_trimestre, ultimo_backup
 from app.services.buoni_kpi import kpi_buoni_anno
 from app.services.cassa import saldo_cassa_calcolato, saldo_conto_calcolato
-
-
-TIPI_SENZA_ALLEGATO = (
-    TipoMovimento.uscita,
-    TipoMovimento.versamento_banca,
-    TipoMovimento.prelievo_banca,
-)
+from app.services.buoni_senza_firma import conta_senza_firma
+from app.services.movimenti_senza_allegato import conta_senza_allegato
 
 
 def _voce(titolo: str, n: int, livello: str, url: str) -> dict:
@@ -80,24 +75,25 @@ def cose_da_fare(anno: int) -> list[dict]:
             )
         )
 
-    n_allegati = 0
-    for m in (
-        Movimento.query.filter_by(anno=anno)
-        .filter(
-            Movimento.stato != StatoMovimento.stornato,
-            Movimento.tipo.in_(TIPI_SENZA_ALLEGATO),
+    n_firme = conta_senza_firma(anno)
+    if n_firme:
+        out.append(
+            _voce(
+                "Buoni da far firmare / ricaricare firmati",
+                n_firme,
+                "warning",
+                url_for("buoni.lista", anno=anno, rapido="da_firmare"),
+            )
         )
-        .all()
-    ):
-        if m.allegati.count() == 0:
-            n_allegati += 1
+
+    n_allegati = conta_senza_allegato(anno)
     if n_allegati:
         out.append(
             _voce(
                 "Uscite/banca senza allegato",
                 n_allegati,
                 "warning",
-                url_for("movimenti.lista", anno=anno),
+                url_for("movimenti.lista", anno=anno, senza_allegato=1),
             )
         )
 
@@ -126,12 +122,16 @@ def cose_da_fare(anno: int) -> list[dict]:
         ultimo = ultimo.replace(tzinfo=timezone.utc)
     if ultimo is None or ultimo < now - timedelta(days=7):
         out.append(
-            _voce(
-                "Backup non eseguito da più di 7 giorni (o mai)",
-                1,
-                "warning",
-                url_for("backup_export.index", anno=anno),
-            )
+            {
+                **_voce(
+                    "Backup non eseguito da più di 7 giorni (o mai)",
+                    1,
+                    "warning",
+                    url_for("backup_export.index", anno=anno),
+                ),
+                "azione_post": url_for("backup_export.backup"),
+                "azione_label": "Esegui ora",
+            }
         )
 
     return out

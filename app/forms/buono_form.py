@@ -23,6 +23,7 @@ class BuonoForm(FlaskForm):
     data_buono = DateField("Data", validators=[DataRequired()])
     richiedente = StringField("Richiedente", validators=[Optional()])
     ufficio_richiedente = StringField("Ufficio richiedente", validators=[Optional()])
+    responsabile_ufficio = StringField("Responsabile dell'ufficio", validators=[Optional()])
     causale = TextAreaField("Causale", validators=[Optional()])
     importo_autorizzato = DecimalField("Importo autorizzato", places=2, validators=[DataRequired()])
     importo_speso = DecimalField("Importo speso", places=2, validators=[Optional()], default=0)

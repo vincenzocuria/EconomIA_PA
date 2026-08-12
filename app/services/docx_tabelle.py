@@ -18,6 +18,10 @@ def cella_multiline(cell: _Cell, linee: list[str], font_pt: float = 14, bold: bo
     """Sostituisce il contenuto della cella con testo a più righe (break Word)."""
     p = cell.paragraphs[0]
     p.clear()
+    pf = p.paragraph_format
+    pf.space_before = Pt(0)
+    pf.space_after = Pt(0)
+    pf.line_spacing = 1.0
     for i, linea in enumerate(linee):
         if i:
             p.add_run().add_break()

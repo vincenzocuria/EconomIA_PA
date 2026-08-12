@@ -7,21 +7,36 @@
     window.egAnagraficaAutocomplete.bind(el, { url: url, onSelect: onSelect });
   }
 
+  function setIfEmpty(form, name, value) {
+    var el = form.querySelector('[name="' + name + '"]');
+    if (!el || !(value || "").trim()) return;
+    if (!(el.value || "").trim()) {
+      el.value = value;
+    }
+  }
+
+  function setValue(form, name, value) {
+    var el = form.querySelector('[name="' + name + '"]');
+    if (!el || !(value || "").trim()) return;
+    el.value = value;
+  }
+
   var formBuono = document.getElementById("form-buono");
   if (formBuono) {
     bindField(
       '#form-buono [name="richiedente"]',
       formBuono.getAttribute("data-ac-richiedenti"),
       function (item) {
-        var uff = formBuono.querySelector('[name="ufficio_richiedente"]');
-        if (uff && item.ufficio && !(uff.value || "").trim()) {
-          uff.value = item.ufficio;
-        }
+        setIfEmpty(formBuono, "ufficio_richiedente", item.ufficio);
+        setIfEmpty(formBuono, "responsabile_ufficio", item.responsabile);
       }
     );
     bindField(
       '#form-buono [name="ufficio_richiedente"]',
-      formBuono.getAttribute("data-ac-uffici")
+      formBuono.getAttribute("data-ac-uffici"),
+      function (item) {
+        setValue(formBuono, "responsabile_ufficio", item.responsabile);
+      }
     );
     bindField(
       '#form-buono [name="beneficiario"]',
