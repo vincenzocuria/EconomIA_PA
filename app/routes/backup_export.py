@@ -11,6 +11,7 @@ from app.services.excel_export import (
     nome_file_export,
 )
 from app.models.audit import AuditLog
+from app.services.incarico_periodo import data_incarico, trimestre_in_incarico, trimestri_in_incarico
 from app.services.pdf_verbale import genera_verbale_trimestrale_pdf
 
 bp = Blueprint("backup_export", __name__, url_prefix="/strumenti")
@@ -20,7 +21,12 @@ bp = Blueprint("backup_export", __name__, url_prefix="/strumenti")
 @login_required
 def index():
     anno = int(request.args.get("anno", date.today().year))
-    return render_template("strumenti/index.html", anno=anno)
+    return render_template(
+        "strumenti/index.html",
+        anno=anno,
+        trimestri=trimestri_in_incarico(anno),
+        incarico_dal=data_incarico(),
+    )
 
 
 @bp.route("/audit")
@@ -83,8 +89,8 @@ def export_riepilogo():
 @bp.route("/verbale/<int:anno>/<int:trimestre>", methods=["POST"])
 @login_required
 def verbale_pdf(anno: int, trimestre: int):
-    if trimestre < 1 or trimestre > 4:
-        flash("Trimestre non valido.", "danger")
+    if trimestre < 1 or trimestre > 4 or not trimestre_in_incarico(anno, trimestre):
+        flash("Trimestre precedente all'inizio dell'incarico o non valido.", "warning")
         return redirect(url_for("backup_export.index", anno=anno))
     path = genera_verbale_trimestrale_pdf(anno, trimestre)
     return send_file(path, as_attachment=True, download_name=path.name)

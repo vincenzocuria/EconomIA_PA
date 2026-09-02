@@ -18,7 +18,8 @@
     <div class="card border-0 shadow-sm">
       <div class="card-header bg-white fw-semibold">Carica verbale PDF</div>
       <div class="card-body">
-        <form method="post" action="{{ url_for('verbali.carica') }}" enctype="multipart/form-data">
+        <form method="post" action="{{ url_for('verbali.carica') }}" enctype="multipart/form-data"
+              id="form-verbale" data-anno="{{ anno }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="anno" value="{{ anno }}">
           {{ form.numero.label(class="form-label") }}
@@ -33,10 +34,16 @@
           {{ form.note(class="form-control mb-2", rows="2") }}
           {{ form.file.label(class="form-label") }}
           {{ form.file(class="form-control mb-3", accept=".pdf,application/pdf") }}
-          {{ form.submit(class="btn btn-primary") }}
+          {{ form.submit(class="btn btn-primary", disabled=not trimestri_ok) }}
         </form>
         <p class="small text-muted mt-3 mb-0">
           Un verbale ufficiale per trimestre: un nuovo caricamento sostituisce quello esistente.
+          {% if incarico_dal %}
+          Solo trimestri dall'incarico (dal {{ incarico_dal.strftime('%d/%m/%Y') }}).
+          {% endif %}
+          {% if not trimestri_ok %}
+          Nessun trimestre in incarico per {{ anno }}.
+          {% endif %}
         </p>
       </div>
     </div>
@@ -81,4 +88,7 @@
     </div>
   </div>
 </div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/verbale_form.js') }}"></script>
 {% endblock %}

@@ -25,13 +25,17 @@
     <div class="card border-0 shadow-sm h-100">
       <div class="card-header bg-white fw-semibold">Riepilogo trimestrale (PDF operativo)</div>
       <div class="card-body">
-        <p class="small text-muted">Elenco movimenti del trimestre. Il verbale ufficiale del Revisore si archivia in <a href="{{ url_for('verbali.lista', anno=anno) }}">Verbali</a>.</p>
+        <p class="small text-muted">Elenco movimenti del trimestre. Il verbale ufficiale del Revisore si archivia in <a href="{{ url_for('verbali.lista', anno=anno) }}">Verbali</a>.
+          {% if incarico_dal %}Solo trimestri dall'incarico (dal {{ incarico_dal.strftime('%d/%m/%Y') }}).{% endif %}
+        </p>
         <div class="d-flex flex-wrap gap-2">
-          {% for t in [1,2,3,4] %}
+          {% for t in trimestri %}
           <form method="post" action="{{ url_for('backup_export.verbale_pdf', anno=anno, trimestre=t) }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="btn btn-sm btn-outline-primary">T{{ t }}</button>
           </form>
+          {% else %}
+          <p class="small text-muted mb-0">Nessun trimestre in incarico per {{ anno }}.</p>
           {% endfor %}
         </div>
       </div>

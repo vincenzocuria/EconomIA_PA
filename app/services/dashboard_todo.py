@@ -1,14 +1,15 @@
 """Voci aggregate «Cose da fare» per la dashboard."""
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
 from flask import url_for
 
 from app.models.cassetto import SaldoAnnuale
-from app.models.movimento import Movimento, StatoMovimento, trimestre_da_data
+from app.models.movimento import Movimento, StatoMovimento
 from app.models.verbale_verifica import VerbaleVerifica
-from app.services.alerts import fine_trimestre, ultimo_backup
+from app.services.alerts import ultimo_backup
+from app.services.incarico_periodo import trimestre_dovuto
 from app.services.buoni_kpi import kpi_buoni_anno
 from app.services.cassa import saldo_cassa_calcolato, saldo_conto_calcolato
 from app.services.buoni_senza_firma import conta_senza_firma
@@ -21,7 +22,6 @@ def _voce(titolo: str, n: int, livello: str, url: str) -> dict:
 
 def cose_da_fare(anno: int) -> list[dict]:
     out: list[dict] = []
-    oggi = date.today()
 
     saldo_row = SaldoAnnuale.query.get(anno)
     ini_cassa = Decimal(str(saldo_row.saldo_iniziale)) if saldo_row else Decimal("0")
@@ -99,10 +99,7 @@ def cose_da_fare(anno: int) -> list[dict]:
 
     trim_mancanti = 0
     for t in range(1, 5):
-        if oggi.year == anno and t > trimestre_da_data(oggi):
-            continue
-        trim_chiuso = anno < oggi.year or (anno == oggi.year and fine_trimestre(anno, t) < oggi)
-        if not trim_chiuso:
+        if not trimestre_dovuto(anno, t):
             continue
         if VerbaleVerifica.query.filter_by(anno=anno, trimestre=t).first() is None:
             trim_mancanti += 1

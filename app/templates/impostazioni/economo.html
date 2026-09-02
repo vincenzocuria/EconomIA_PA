@@ -9,7 +9,11 @@
     <div class="col-md-6">{{ form.nome.label(class="form-label") }}{{ form.nome(class="form-control") }}</div>
     <div class="col-md-6">{{ form.codice_fiscale.label(class="form-label") }}{{ form.codice_fiscale(class="form-control") }}</div>
     <div class="col-md-6">{{ form.qualifica.label(class="form-label") }}{{ form.qualifica(class="form-control") }}</div>
-    <div class="col-md-6">{{ form.incarico_dal.label(class="form-label") }}{{ form.incarico_dal(class="form-control") }}</div>
+    <div class="col-md-6">
+      {{ form.incarico_dal.label(class="form-label") }}
+      {{ form.incarico_dal(class="form-control") }}
+      <div class="form-text">Da questa data il sistema chiede verbali e riepiloghi solo per i trimestri coperti dall'incarico, non per i periodi precedenti.</div>
+    </div>
     <div class="col-md-6">{{ form.delibera_nomina.label(class="form-label") }}{{ form.delibera_nomina(class="form-control") }}</div>
     <div class="col-md-6">{{ form.telefono.label(class="form-label") }}{{ form.telefono(class="form-control") }}</div>
     <div class="col-md-6">{{ form.email.label(class="form-label") }}{{ form.email(class="form-control") }}</div>

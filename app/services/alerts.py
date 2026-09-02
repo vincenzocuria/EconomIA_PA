@@ -9,6 +9,7 @@ from app.models.movimento import Movimento, StatoMovimento, TipoMovimento, trime
 from app.models.verbale import VerbaleTrimestrale
 from app.models.verbale_verifica import VerbaleVerifica
 from app.services.cassa import saldo_cassa_calcolato, saldo_conto_calcolato
+from app.services.incarico_periodo import trimestre_dovuto
 from app.services.numero_display import formato_numero_sezionale
 
 
@@ -106,11 +107,7 @@ def raccogli_alert(anno: int) -> list[dict]:
             )
 
     for t in range(1, 5):
-        oggi = date.today()
-        if oggi.year == anno and t > trimestre_da_data(oggi):
-            continue
-        trim_chiuso = anno < oggi.year or (anno == oggi.year and fine_trimestre(anno, t) < oggi)
-        if not trim_chiuso:
+        if not trimestre_dovuto(anno, t):
             continue
         vu = VerbaleVerifica.query.filter_by(anno=anno, trimestre=t).first()
         if vu is None:

@@ -10,10 +10,36 @@ from app.extensions import db
 from app.forms.verbale_verifica_form import VerbaleVerificaForm
 from app.models.verbale_verifica import VerbaleVerifica
 from app.services.audit_log import scrivi_audit
+from app.services.incarico_periodo import (
+    data_incarico,
+    scelte_trimestre,
+    trimestre_default_form,
+    trimestre_in_incarico,
+)
 from app.services.upload_allegato import estensione_consentita, mime_consentito_per_estensione
 from app.services.verbale_archivio import salva_pdf_verbale
 
 bp = Blueprint("verbali", __name__, url_prefix="/verbali")
+
+_OGGETTO_PREF = "VERIFICA DI CASSA ECONOMALE — TRIMESTRE"
+
+
+def _oggetto_default(anno: int, trimestre: int) -> str:
+    return f"{_OGGETTO_PREF} {trimestre} {anno}"
+
+
+def _prepara_form(form: VerbaleVerificaForm, anno: int) -> VerbaleVerificaForm:
+    form.trimestre.choices = scelte_trimestre(anno)
+    if not form.data_verbale.data:
+        form.data_verbale.data = date.today()
+    default_t = trimestre_default_form(anno)
+    validi = {c[0] for c in form.trimestre.choices}
+    if default_t is not None and form.trimestre.data not in validi:
+        form.trimestre.data = default_t
+    if not form.oggetto.data:
+        t = form.trimestre.data or default_t or 1
+        form.oggetto.data = _oggetto_default(anno, t)
+    return form
 
 
 @bp.route("/")
@@ -25,12 +51,15 @@ def lista():
         .order_by(VerbaleVerifica.trimestre.desc(), VerbaleVerifica.numero.desc())
         .all()
     )
-    form = VerbaleVerificaForm()
-    if not form.data_verbale.data:
-        form.data_verbale.data = date.today()
-    if not form.oggetto.data:
-        form.oggetto.data = f"VERIFICA DI CASSA ECONOMALE — TRIMESTRE {form.trimestre.data or 1} {anno}"
-    return render_template("verbali/lista.html", rows=rows, anno=anno, form=form)
+    form = _prepara_form(VerbaleVerificaForm(), anno)
+    return render_template(
+        "verbali/lista.html",
+        rows=rows,
+        anno=anno,
+        form=form,
+        incarico_dal=data_incarico(),
+        trimestri_ok=scelte_trimestre(anno),
+    )
 
 
 @bp.route("/carica", methods=["POST"])
@@ -38,8 +67,13 @@ def lista():
 def carica():
     anno = int(request.form.get("anno", date.today().year))
     form = VerbaleVerificaForm()
+    form.trimestre.choices = scelte_trimestre(anno)
     if not form.validate_on_submit():
         flash("Errore validazione verbale.", "danger")
+        return redirect(url_for("verbali.lista", anno=anno))
+    trim = form.trimestre.data
+    if not trimestre_in_incarico(anno, trim):
+        flash("Trimestre precedente all'inizio dell'incarico.", "warning")
         return redirect(url_for("verbali.lista", anno=anno))
     f = form.file.data
     if not f or not f.filename:
@@ -54,7 +88,6 @@ def carica():
         flash("MIME non coerente (atteso application/pdf).", "danger")
         return redirect(url_for("verbali.lista", anno=anno))
 
-    trim = form.trimestre.data
     esistente = VerbaleVerifica.query.filter_by(anno=anno, trimestre=trim).first()
     if esistente:
         vecchio = INSTANCE_DIR / esistente.filename_stored
