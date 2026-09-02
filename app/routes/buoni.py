@@ -5,13 +5,13 @@ from flask_login import login_required
 
 from app.extensions import db
 from app.forms.buono_form import BuonoForm
-from app.models.allegato import Allegato, TipoAllegato
+from app.models.allegato import Allegato
 from app.models.buono import BuonoEconomale, StatoBuono
 from app.models.movimento import Movimento
 from app.models.sezionale import Sezionale
-from app.services.allega_a_buono import allega_file_a_buono
 from app.services.anagrafiche_sync import sync_da_buono
 from app.services.audit_log import scrivi_audit
+from app.services.carica_modulo_firmato import carica_modulo_firmato
 from app.services.buoni_filtri import filtri_attivi, parametri_filtro, query_buoni
 from app.services.buoni_kpi import kpi_buoni_anno
 from app.services.buoni_senza_firma import ids_senza_firma
@@ -19,6 +19,7 @@ from app.services.buono_da_movimento import collega_movimento_a_buono, valori_pr
 from app.services.docx_rimborso import genera_docx_rimborso
 from app.services.pdf_buono import genera_pdf_buono
 from app.services.progressivi import numero_buono_libero, prossimo_numero_buono
+from app.services.redirect_interno import redirect_interno
 from app.services.sezionali_scelte import scelte_sezionale, sezionale_default_buono
 
 bp = Blueprint("buoni", __name__, url_prefix="/buoni")
@@ -78,10 +79,9 @@ def _buono_da_form(
 
 
 def _salva_firmato(form: BuonoForm, b: BuonoEconomale) -> None:
-    f = form.allegato_firmato.data
-    if not f or not getattr(f, "filename", None):
+    ok, err = carica_modulo_firmato(b, form.allegato_firmato.data)
+    if not ok and err is None:
         return
-    _, err = allega_file_a_buono(b, f, TipoAllegato.autorizzazione)
     if err:
         flash(err, "warning")
     else:
@@ -235,6 +235,20 @@ def modulo_rimborso(id: int):
         download_name=path.name,
         mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     )
+
+
+@bp.route("/<int:id>/carica-firmato", methods=["POST"])
+@login_required
+def carica_firmato(id: int):
+    b = BuonoEconomale.query.get_or_404(id)
+    ok, err = carica_modulo_firmato(b, request.files.get("allegato_firmato"))
+    if not ok and err is None:
+        flash("Seleziona il file del modulo firmato (PDF o immagine).", "warning")
+    elif err:
+        flash(err, "warning")
+    else:
+        flash("Modulo firmato caricato.", "success")
+    return redirect_interno(url_for("buoni.modifica", id=b.id))
 
 
 @bp.route("/<int:id>/chiudi", methods=["POST"])

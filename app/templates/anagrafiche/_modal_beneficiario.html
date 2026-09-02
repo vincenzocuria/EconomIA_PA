@@ -1,0 +1,26 @@
+<div class="modal fade" id="modal-nuovo-beneficiario" tabindex="-1" aria-labelledby="modal-nuovo-beneficiario-title" aria-hidden="true"
+     data-salva-url="{{ url_for('anagrafiche_api.beneficiari_crea') }}">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="modal-nuovo-beneficiario-title">Nuovo fornitore</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label" for="eg-ben-denominazione">Denominazione</label>
+          <input type="text" class="form-control" id="eg-ben-denominazione" maxlength="300" autocomplete="off">
+        </div>
+        <div class="mb-0">
+          <label class="form-label" for="eg-ben-cf">Codice fiscale / P.IVA</label>
+          <input type="text" class="form-control" id="eg-ben-cf" maxlength="32" autocomplete="off">
+        </div>
+        <p class="text-danger small mt-2 mb-0 d-none" id="eg-ben-errore" role="alert"></p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annulla</button>
+        <button type="button" class="btn btn-primary" id="eg-ben-salva">Salva e usa</button>
+      </div>
+    </div>
+  </div>
+</div>

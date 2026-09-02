@@ -2,26 +2,33 @@
 {% block title %}Anagrafiche — EconomIA_PA{% endblock %}
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-  <h1 class="h3 mb-0">Anagrafiche buoni</h1>
+  <h1 class="h3 mb-0">Anagrafiche</h1>
   <div class="d-flex gap-2">
     {% if tab == 'uffici' %}
     <a class="btn btn-sm btn-primary" href="{{ url_for('anagrafiche.ufficio_nuovo') }}">Nuovo ufficio</a>
+    {% elif tab == 'fornitori' %}
+    <a class="btn btn-sm btn-primary" href="{{ url_for('anagrafiche.fornitore_nuovo') }}">Nuovo fornitore</a>
     {% else %}
     <a class="btn btn-sm btn-primary" href="{{ url_for('anagrafiche.richiedente_nuovo') }}">Nuovo richiedente</a>
     {% endif %}
   </div>
 </div>
 <p class="small text-muted mb-3">
-  Salvati automaticamente dai buoni; qui puoi modificarli.
-  L’associazione richiedente → ufficio → responsabile serve alla compilazione e alle firme del modulo.
+  Si aggiornano anche salvando buoni e movimenti.
+  Richiedente → ufficio → responsabile serve alle firme del modulo;
+  i fornitori/beneficiari alimentano movimenti e buoni.
+  Eliminare toglie solo l’anagrafica: i documenti già registrati restano.
 </p>
 
 <ul class="nav nav-tabs mb-3">
   <li class="nav-item">
-    <a class="nav-link {% if tab != 'uffici' %}active{% endif %}" href="{{ url_for('anagrafiche.lista', tab='richiedenti') }}">Richiedenti</a>
+    <a class="nav-link {% if tab == 'richiedenti' %}active{% endif %}" href="{{ url_for('anagrafiche.lista', tab='richiedenti') }}">Richiedenti</a>
   </li>
   <li class="nav-item">
     <a class="nav-link {% if tab == 'uffici' %}active{% endif %}" href="{{ url_for('anagrafiche.lista', tab='uffici') }}">Uffici / responsabili</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if tab == 'fornitori' %}active{% endif %}" href="{{ url_for('anagrafiche.lista', tab='fornitori') }}">Fornitori</a>
   </li>
 </ul>
 
@@ -40,12 +47,43 @@
       <tr>
         <td>{{ u.denominazione }}</td>
         <td>{{ u.responsabile or "—" }}</td>
-        <td class="text-end">
+        <td class="text-end text-nowrap">
           <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('anagrafiche.ufficio_modifica', id=u.id) }}">Modifica</a>
+          {% set action = url_for('anagrafiche.ufficio_elimina', id=u.id) %}
+          {% set conferma = "Eliminare l'ufficio «" ~ u.denominazione ~ "» dall'anagrafica?" %}
+          {% include "anagrafiche/_elimina.html" %}
         </td>
       </tr>
       {% else %}
       <tr><td colspan="3" class="p-4 text-muted">Nessun ufficio. Verranno creati salvando i buoni, oppure aggiungine uno.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% elif tab == 'fornitori' %}
+<div class="table-responsive card border-0 shadow-sm">
+  <table class="table table-sm table-hover mb-0">
+    <thead class="table-light">
+      <tr>
+        <th>Denominazione</th>
+        <th>Codice fiscale / P.IVA</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in fornitori %}
+      <tr>
+        <td>{{ f.denominazione }}</td>
+        <td>{{ f.cf_piva or "—" }}</td>
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('anagrafiche.fornitore_modifica', id=f.id) }}">Modifica</a>
+          {% set action = url_for('anagrafiche.fornitore_elimina', id=f.id) %}
+          {% set conferma = "Eliminare il fornitore «" ~ f.denominazione ~ "» dall'anagrafica?" %}
+          {% include "anagrafiche/_elimina.html" %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="3" class="p-4 text-muted">Nessun fornitore. Verranno creati salvando i movimenti, oppure aggiungine uno.</td></tr>
       {% endfor %}
     </tbody>
   </table>
@@ -65,8 +103,11 @@
       <tr>
         <td>{{ r.nome }}</td>
         <td>{{ r.ufficio_default or "—" }}</td>
-        <td class="text-end">
+        <td class="text-end text-nowrap">
           <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('anagrafiche.richiedente_modifica', id=r.id) }}">Modifica</a>
+          {% set action = url_for('anagrafiche.richiedente_elimina', id=r.id) %}
+          {% set conferma = "Eliminare il richiedente «" ~ r.nome ~ "» dall'anagrafica?" %}
+          {% include "anagrafiche/_elimina.html" %}
         </td>
       </tr>
       {% else %}

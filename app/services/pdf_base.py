@@ -10,6 +10,7 @@ from reportlab.platypus import Image, Paragraph, Spacer, Table, TableStyle
 
 from app.models.economo import EconomoSettings
 from app.models.ente import EnteSettings
+from app.services.economo_testo import nome_da_economo
 from app.services.logo_ente import logo_ente_path
 
 
@@ -80,7 +81,7 @@ def intestazione_flowables():
     left_cell: list = []
     left_cell.append(Paragraph("<b>Economo</b>", st_eco_lab))
     if eco:
-        nome = " ".join(x for x in [eco.nome, eco.cognome] if (x or "").strip())
+        nome = nome_da_economo(eco)
         if nome:
             left_cell.append(Paragraph(escape(nome), st_eco))
         if (eco.qualifica or "").strip():

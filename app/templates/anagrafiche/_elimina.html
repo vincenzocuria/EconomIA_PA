@@ -1,0 +1,5 @@
+<form class="d-inline" method="post" action="{{ action }}"
+      onsubmit="return confirm({{ conferma|tojson }});">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button type="submit" class="{{ btn_class|default('btn btn-sm btn-outline-danger') }}">Elimina</button>
+</form>

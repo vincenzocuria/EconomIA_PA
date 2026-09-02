@@ -38,10 +38,29 @@
     }
 
     function applyItem(item) {
+      if (item && item._create) {
+        close();
+        if (opts.onCreate) opts.onCreate(item.label || "");
+        return;
+      }
       input.value = item.label || "";
       if (opts.onSelect) opts.onSelect(item);
       close();
       input.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+
+    function conVoceCrea(raw) {
+      var q = (input.value || "").trim();
+      var out = (raw || []).slice();
+      if (!opts.onCreate || !q) return out;
+      var qLow = q.toLowerCase();
+      var giaPresente = out.some(function (it) {
+        return (it.label || "").toLowerCase() === qLow;
+      });
+      if (!giaPresente) {
+        out.push({ _create: true, label: q });
+      }
+      return out;
     }
 
     function render() {
@@ -52,12 +71,12 @@
       }
       items.forEach(function (item, idx) {
         var li = document.createElement("li");
-        li.className = "eg-ac-item" + (idx === active ? " is-active" : "");
+        li.className = "eg-ac-item" + (idx === active ? " is-active" : "") + (item._create ? " eg-ac-create" : "");
         var main = document.createElement("span");
         main.className = "eg-ac-main";
-        main.textContent = item.label || "";
+        main.textContent = item._create ? ("+ Aggiungi «" + (item.label || "") + "»") : (item.label || "");
         li.appendChild(main);
-        var hint = item.hint || item.cf_piva || item.ufficio || "";
+        var hint = item._create ? (opts.createHint || "Aggiungi in anagrafica") : (item.hint || item.cf_piva || item.ufficio || "");
         if (hint) {
           var sub = document.createElement("span");
           sub.className = "eg-ac-hint";
@@ -83,7 +102,7 @@
       fetch(u, { headers: { Accept: "application/json" } })
         .then(function (r) { return r.json(); })
         .then(function (data) {
-          items = (data && data.items) || [];
+          items = conVoceCrea((data && data.items) || []);
           active = -1;
           render();
         })

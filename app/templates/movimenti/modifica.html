@@ -24,7 +24,16 @@
     <div class="col-md-3">{{ form.tipo.label(class="form-label") }}{{ form.tipo(class="form-select") }}</div>
     <div class="col-md-3">{{ form.importo.label(class="form-label") }}{{ form.importo(class="form-control") }}</div>
     <div class="col-12">{{ form.causale.label(class="form-label") }}{{ form.causale(class="form-control", rows=2) }}</div>
-    <div class="col-md-6">{{ form.beneficiario_fornitore.label(class="form-label") }}{{ form.beneficiario_fornitore(class="form-control") }}</div>
+    <div class="col-md-6">
+      {{ form.beneficiario_fornitore.label(class="form-label") }}
+      <div class="d-flex gap-2 align-items-stretch">
+        <div class="flex-grow-1 min-w-0">
+          {{ form.beneficiario_fornitore(class="form-control") }}
+        </div>
+        <button type="button" class="btn btn-outline-secondary px-3 flex-shrink-0" data-eg-add="beneficiario" title="Nuovo fornitore" aria-label="Nuovo fornitore">+</button>
+      </div>
+      <div class="form-text"><a href="{{ url_for('anagrafiche.lista', tab='fornitori') }}">Gestisci fornitori</a></div>
+    </div>
     <div class="col-md-6">{{ form.cf_piva.label(class="form-label") }}{{ form.cf_piva(class="form-control") }}</div>
     <div class="col-md-6">
       {{ form.buono_id.label(class="form-label") }}{{ form.buono_id(class="form-select") }}
@@ -91,9 +100,11 @@
 
 <p class="small text-muted mt-3">Per rettifiche contabili usare tipo «rettifica» con importo firmato (+/−) coerente con le istruzioni interne.</p>
 <p class="small text-muted">Filiale e riferimento ricevuta compaiono solo per prelievi e versamenti bancari.</p>
+{% include "anagrafiche/_modal_beneficiario.html" %}
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/movimento_form.js') }}"></script>
 <script src="{{ url_for('static', filename='js/anagrafica_autocomplete.js') }}"></script>
+<script src="{{ url_for('static', filename='js/anagrafica_modal.js') }}"></script>
 <script src="{{ url_for('static', filename='js/anagrafica_form_bind.js') }}"></script>
 {% endblock %}

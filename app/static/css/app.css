@@ -53,9 +53,8 @@ tr[data-href]:hover > * {
 .eg-ac-main {
   font-size: 0.95rem;
 }
-.eg-ac-hint {
-  font-size: 0.78rem;
-  color: var(--bs-secondary-color);
+.eg-ac-create .eg-ac-main {
+  color: var(--bs-primary);
 }
 .text-bg-cassa-basso {
   color: #fff !important;

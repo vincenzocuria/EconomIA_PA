@@ -80,6 +80,7 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes.sezionali import bp as sezionali_bp
     from app.routes.anagrafiche_api import bp as anagrafiche_api_bp
     from app.routes.anagrafiche import bp as anagrafiche_bp
+    from app.routes import anagrafiche_fornitori as _anagrafiche_fornitori  # noqa: F401
     from app.routes.progressivi_api import bp as progressivi_api_bp
     from app.routes.verbali import bp as verbali_bp
 

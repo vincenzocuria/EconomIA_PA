@@ -96,6 +96,27 @@ def salva_beneficiario(
     return row
 
 
+def aggiorna_beneficiario(
+    row: AnagraficaBeneficiario,
+    denominazione: str | None,
+    cf_piva: str | None,
+) -> str | None:
+    nome = normalizza_denominazione(denominazione)
+    if not nome:
+        return "Inserisci la denominazione del fornitore."
+    chiave = normalizza_chiave(nome)
+    altro = AnagraficaBeneficiario.query.filter(
+        AnagraficaBeneficiario.denominazione_norm == chiave,
+        AnagraficaBeneficiario.id != row.id,
+    ).first()
+    if altro:
+        return "Esiste già un fornitore con questa denominazione."
+    row.denominazione = nome
+    row.denominazione_norm = chiave
+    row.cf_piva = pulisci_testo(cf_piva, max_len=32)
+    return None
+
+
 def sync_da_buono(
     richiedente: str | None,
     ufficio: str | None,

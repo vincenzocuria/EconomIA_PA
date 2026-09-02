@@ -9,6 +9,7 @@ from app.models.cassetto import SaldoAnnuale
 from app.models.movimento import Movimento
 from app.models.verbale_verifica import VerbaleVerifica
 from app.services.alerts import prossima_scadenza_verbale, raccogli_alert, trimestre_corrente, ultimo_backup
+from app.services.buoni_senza_firma import query_senza_firma
 from app.services.cassa import (
     saldo_cassa_calcolato,
     saldo_conto_calcolato,
@@ -49,6 +50,7 @@ def dashboard():
         )
     recenti = Movimento.query.filter_by(anno=anno).order_by(Movimento.created_at.desc()).limit(8).all()
     todo = cose_da_fare(anno)
+    buoni_da_firmare = query_senza_firma(anno).limit(8).all()
     alert_extra = [a for a in raccogli_alert(anno) if a["livello"] in ("danger", "secondary")]
     charts = dati_grafici_dashboard(anno, ini_cassa)
     y, t = trimestre_corrente()
@@ -72,6 +74,7 @@ def dashboard():
         ultimo_prelievo=ultimo_prelievo(anno),
         ultimo_versamento=ultimo_versamento(anno),
         todo=todo,
+        buoni_da_firmare=buoni_da_firmare,
         alert_extra=alert_extra,
         charts=charts,
         ultimo_backup=ultimo_backup(),

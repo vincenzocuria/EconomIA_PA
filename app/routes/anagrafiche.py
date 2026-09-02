@@ -1,4 +1,4 @@
-"""Gestione anagrafiche richiedenti e uffici (con responsabili)."""
+"""Gestione anagrafiche richiedenti, uffici e fornitori."""
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import login_required
@@ -6,8 +6,10 @@ from flask_login import login_required
 from app.extensions import db
 from app.forms.anagrafica_richiedente_form import AnagraficaRichiedenteForm
 from app.forms.anagrafica_ufficio_form import AnagraficaUfficioForm
+from app.models.anagrafica_beneficiario import AnagraficaBeneficiario
 from app.models.anagrafica_richiedente import AnagraficaRichiedente
 from app.models.anagrafica_ufficio import AnagraficaUfficio
+from app.services.anagrafiche_elimina import elimina_riga
 from app.services.anagrafiche_sync import salva_richiedente, salva_ufficio
 from app.services.anagrafiche_testo import (
     normalizza_chiave,
@@ -23,13 +25,17 @@ bp = Blueprint("anagrafiche", __name__, url_prefix="/anagrafiche")
 @login_required
 def lista():
     tab = (request.args.get("tab") or "richiedenti").strip()
+    if tab not in ("richiedenti", "uffici", "fornitori"):
+        tab = "richiedenti"
     richiedenti = AnagraficaRichiedente.query.order_by(AnagraficaRichiedente.nome).all()
     uffici = AnagraficaUfficio.query.order_by(AnagraficaUfficio.denominazione).all()
+    fornitori = AnagraficaBeneficiario.query.order_by(AnagraficaBeneficiario.denominazione).all()
     return render_template(
         "anagrafiche/lista.html",
         tab=tab,
         richiedenti=richiedenti,
         uffici=uffici,
+        fornitori=fornitori,
     )
 
 
@@ -87,6 +93,16 @@ def richiedente_modifica(id: int):
     )
 
 
+@bp.route("/richiedenti/<int:id>/elimina", methods=["POST"])
+@login_required
+def richiedente_elimina(id: int):
+    row = AnagraficaRichiedente.query.get_or_404(id)
+    nome = row.nome
+    elimina_riga(row, entita="anagrafica_richiedente", dettaglio={"nome": nome})
+    flash("Richiedente eliminato.", "success")
+    return redirect(url_for("anagrafiche.lista", tab="richiedenti"))
+
+
 @bp.route("/uffici/nuovo", methods=["GET", "POST"])
 @login_required
 def ufficio_nuovo():
@@ -139,3 +155,13 @@ def ufficio_modifica(id: int):
         titolo="Modifica ufficio",
         row=row,
     )
+
+
+@bp.route("/uffici/<int:id>/elimina", methods=["POST"])
+@login_required
+def ufficio_elimina(id: int):
+    row = AnagraficaUfficio.query.get_or_404(id)
+    nome = row.denominazione
+    elimina_riga(row, entita="anagrafica_ufficio", dettaglio={"denominazione": nome})
+    flash("Ufficio eliminato.", "success")
+    return redirect(url_for("anagrafiche.lista", tab="uffici"))

@@ -134,6 +134,9 @@
   </div>
 </div>
 
+{% if filtri.rapido == 'da_firmare' %}
+<p class="small text-muted mb-2">Carica qui il PDF o la foto del modulo già firmato, senza aprire la scheda.</p>
+{% endif %}
 <div class="table-responsive card border-0 shadow-sm">
   <table class="table table-sm table-hover mb-0">
     <thead class="table-light">
@@ -148,15 +151,24 @@
         <td>{{ b.importo_autorizzato|eur }}</td>
         <td>{{ b.importo_speso|eur }}</td>
         <td class="text-truncate" style="max-width:10rem">{{ b.richiedente }}</td>
-        <td class="text-end text-nowrap">
-          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('buoni.modifica', id=b.id) }}">Modifica</a>
-          <a class="btn btn-sm btn-success" href="{{ url_for('buoni.modulo_rimborso', id=b.id) }}">Modulo</a>
-          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('buoni.pdf', id=b.id) }}">PDF</a>
-          {% if b.stato.value not in ['chiuso', 'annullato'] %}
-          <form class="d-inline" method="post" action="{{ url_for('buoni.chiudi', id=b.id) }}" onsubmit="return confirm('Chiudere il buono?');">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit" class="btn btn-sm btn-success">Chiudi</button>
-          </form>
+        <td class="text-end">
+          <div class="d-flex flex-wrap justify-content-end align-items-center gap-1">
+            <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('buoni.modifica', id=b.id) }}">Modifica</a>
+            <a class="btn btn-sm btn-success" href="{{ url_for('buoni.modulo_rimborso', id=b.id) }}">Modulo</a>
+            <a class="btn btn-sm btn-outline-primary" href="{{ url_for('buoni.pdf', id=b.id) }}">PDF</a>
+            {% if b.stato.value not in ['chiuso', 'annullato'] %}
+            <form class="d-inline" method="post" action="{{ url_for('buoni.chiudi', id=b.id) }}" onsubmit="return confirm('Chiudere il buono?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-sm btn-success">Chiudi</button>
+            </form>
+            {% endif %}
+          </div>
+          {% if b.id in senza_firma_ids %}
+          <div class="mt-1 d-flex justify-content-end">
+            {% with next=request.full_path %}
+            {% include "buoni/_carica_firmato.html" %}
+            {% endwith %}
+          </div>
           {% endif %}
         </td>
       </tr>

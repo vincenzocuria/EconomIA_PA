@@ -2,17 +2,26 @@
 from pathlib import Path
 
 from docx import Document
+from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Cm, Pt
 
 from app.config import INSTANCE_DIR
 from app.models.buono import BuonoEconomale
+from app.models.economo import EconomoSettings
 from app.services.docx_base import applica_intestazione_ente
-from app.services.docx_tabelle import cella_multiline, tabella_griglia
-from app.services.firme_rimborso import LINEA_FIRMA, linee_firma_richiesta
+from app.services.docx_tabelle import (
+    cella_margini_pt,
+    cella_multiline,
+    riga_altezza_min_cm,
+    tabella_griglia,
+)
+from app.services.economo_testo import nome_da_economo
+from app.services.firme_rimborso import LINEA_FIRMA, linee_firma_modulo
 from app.services.numero_display import formato_numero_sezionale
 
 _FONT = 11
+_FONT_TITOLO = 13
 
 
 def _eur(v) -> str:
@@ -26,6 +35,19 @@ def _data_it(d) -> str:
     if not d:
         return "____ / ____ / ______"
     return d.strftime("%d / %m / %Y")
+
+
+def _applica_margini(tab, **kwargs) -> None:
+    for row in tab.rows:
+        for cell in row.cells:
+            cella_margini_pt(cell, **kwargs)
+
+
+def _parti_blocco(blocco: list[str]) -> tuple[str, str, str]:
+    etichetta = blocco[0] if blocco else ""
+    linea = blocco[-1] if blocco else LINEA_FIRMA
+    nome = blocco[1] if len(blocco) > 2 else ""
+    return etichetta, nome, linea
 
 
 def _para(
@@ -67,53 +89,73 @@ def genera_docx_rimborso(b: BuonoEconomale) -> Path:
 
     doc = Document()
     for section in doc.sections:
-        section.top_margin = Cm(0.8)
-        section.bottom_margin = Cm(0.8)
+        section.page_width = Cm(21.0)
+        section.page_height = Cm(29.7)
+        # Il logo sta nell'header: il margine alto deve coprirlo, sennò Word va a 2 pagine.
+        section.top_margin = Cm(3.0)
+        section.bottom_margin = Cm(1.0)
         section.left_margin = Cm(1.2)
         section.right_margin = Cm(1.2)
-        section.header_distance = Cm(0.4)
+        section.header_distance = Cm(0.3)
         section.footer_distance = Cm(0.4)
 
-    applica_intestazione_ente(doc, logo_cm=2.0, font_comune=11, font_provincia=10)
+    applica_intestazione_ente(doc, logo_cm=1.6, font_comune=11, font_provincia=10)
 
-    _para(doc, "RICHIESTA DI RIMBORSO SPESA ECONOMALE", center=True, bold=True, size=11, space_after=6)
+    _para(
+        doc,
+        "RICHIESTA DI RIMBORSO SPESA ECONOMALE",
+        center=True,
+        bold=True,
+        size=_FONT_TITOLO,
+        space_after=8,
+    )
 
     tab_num = tabella_griglia(doc, 1, 2)
     cella_multiline(tab_num.rows[0].cells[0], [f"Buono economale n. {num}"], font_pt=_FONT)
     cella_multiline(tab_num.rows[0].cells[1], [f"Data {data}"], font_pt=_FONT)
+    riga_altezza_min_cm(tab_num.rows[0], 1.0, esatta=True)
+    _applica_margini(tab_num, top=6, bottom=6, left=8, right=8)
 
     _para(
         doc,
         f"Il/La sottoscritto/a {richiedente}, dell’Ufficio {ufficio}, "
         f"chiede il rimborso di € {importo} per:",
-        space_before=6,
-        space_after=2,
-    )
-    _para(doc, causale, space_after=6)
-
-    blocchi = linee_firma_richiesta(b.richiedente, b.ufficio_richiedente, responsabile)
-    if len(blocchi) == 1:
-        tab_firme = tabella_griglia(doc, 1, 2)
-        cella_multiline(tab_firme.rows[0].cells[0], ["Data", data], font_pt=_FONT)
-        cella_multiline(tab_firme.rows[0].cells[1], blocchi[0], font_pt=_FONT)
-    else:
-        # Richiedente e responsabile affiancati → meno altezza, una sola pagina
-        tab_firme = tabella_griglia(doc, 1, 2)
-        cella_multiline(tab_firme.rows[0].cells[0], blocchi[0], font_pt=_FONT)
-        cella_multiline(tab_firme.rows[0].cells[1], blocchi[1], font_pt=_FONT)
-        _para(doc, f"Data {data}", space_before=4, space_after=4)
-
-    _para(doc, "QUIETANZA", center=True, bold=True, size=11, space_before=8, space_after=4)
-    _para(
-        doc,
-        f"Il/La sottoscritto/a dichiara di aver ricevuto dall’Economo comunale "
-        f"€ {importo} a rimborso della spesa sopra indicata.",
-        space_after=4,
+        space_before=8,
+        space_after=6,
     )
 
-    tab_q = tabella_griglia(doc, 1, 2)
-    cella_multiline(tab_q.rows[0].cells[0], ["Data", data, "", "Firma per ricevuta", "", LINEA_FIRMA], font_pt=_FONT)
-    cella_multiline(tab_q.rows[0].cells[1], ["L’Economo comunale", "", LINEA_FIRMA], font_pt=_FONT)
+    tab_cau = tabella_griglia(doc, 2, 1, col_cm=18.6)
+    cella_multiline(
+        tab_cau.rows[0].cells[0],
+        ["Causale / oggetto della spesa"],
+        font_pt=_FONT,
+        bold=True,
+    )
+    cella_multiline(tab_cau.rows[1].cells[0], [causale], font_pt=_FONT)
+    riga_altezza_min_cm(tab_cau.rows[0], 0.8, esatta=True)
+    riga_altezza_min_cm(tab_cau.rows[1], 2.8, esatta=True)
+    _applica_margini(tab_cau, top=6, bottom=6, left=8, right=8)
+
+    eco = EconomoSettings.query.get(1)
+    blocchi = linee_firma_modulo(
+        b.richiedente,
+        b.ufficio_richiedente,
+        responsabile,
+        nome_da_economo(eco),
+    )
+    _para(doc, f"Data {data}", space_before=10, space_after=8)
+    n = len(blocchi)
+    col_cm = 6.2 if n == 3 else 9.29
+    tab_firme = tabella_griglia(doc, 2, n, col_cm=col_cm)
+    for i, blocco in enumerate(blocchi):
+        etichetta, nome, linea = _parti_blocco(blocco)
+        testa = [etichetta, nome] if nome else [etichetta]
+        cella_multiline(tab_firme.rows[0].cells[i], testa, font_pt=_FONT, bold=True)
+        cella_multiline(tab_firme.rows[1].cells[i], [linea], font_pt=_FONT)
+        tab_firme.rows[1].cells[i].vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.BOTTOM
+    riga_altezza_min_cm(tab_firme.rows[0], 1.5, esatta=True)
+    riga_altezza_min_cm(tab_firme.rows[1], 4.2, esatta=True)
+    _applica_margini(tab_firme, top=6, bottom=10, left=6, right=6)
 
     doc.save(str(path))
     return path

@@ -1,4 +1,4 @@
-"""Logica linee firma del modulo rimborso (richiedente / responsabile)."""
+"""Logica linee firma del modulo rimborso (richiedente / responsabile / economo)."""
 
 from app.services.anagrafiche_testo import normalizza_chiave, pulisci_testo
 
@@ -32,6 +32,13 @@ def _blocco_richiedente(nome: str) -> list[str]:
     return ["Il/La Richiedente", _LINEA_FIRMA]
 
 
+def _blocco_economo(nome: str) -> list[str]:
+    etichetta = "L’Economo comunale"
+    if nome:
+        return [etichetta, nome, _LINEA_FIRMA]
+    return [etichetta, _LINEA_FIRMA]
+
+
 def linee_firma_richiesta(
     richiedente: str | None,
     ufficio: str | None,
@@ -49,3 +56,15 @@ def linee_firma_richiesta(
         return [_blocco_richiedente(rich), _blocco_responsabile(uff, resp)]
 
     return [_blocco_responsabile(uff, resp)]
+
+
+def linee_firma_modulo(
+    richiedente: str | None,
+    ufficio: str | None,
+    responsabile: str | None,
+    nome_economo: str | None = None,
+) -> list[list[str]]:
+    """Firme del modulo: richiedente/responsabile (unificati se coincidono) + economo."""
+    blocchi = linee_firma_richiesta(richiedente, ufficio, responsabile)
+    blocchi.append(_blocco_economo(pulisci_testo(nome_economo)))
+    return blocchi

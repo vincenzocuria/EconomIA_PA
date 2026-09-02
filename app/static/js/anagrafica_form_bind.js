@@ -1,10 +1,44 @@
 (function () {
   if (!window.egAnagraficaAutocomplete) return;
 
-  function bindField(selector, url, onSelect) {
+  function bindField(selector, url, onSelect, onCreate) {
     var el = document.querySelector(selector);
     if (!el || !url) return;
-    window.egAnagraficaAutocomplete.bind(el, { url: url, onSelect: onSelect });
+    window.egAnagraficaAutocomplete.bind(el, {
+      url: url,
+      onSelect: onSelect,
+      onCreate: onCreate,
+      createHint: onCreate ? "Nuovo fornitore" : ""
+    });
+  }
+
+  function applicaBeneficiario(form, nomeSel, cfSel, item) {
+    var nome = form.querySelector(nomeSel);
+    var cf = cfSel ? form.querySelector(cfSel) : null;
+    if (nome) nome.value = item.label || "";
+    if (cf) cf.value = item.cf_piva || "";
+    if (nome) nome.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  function apriNuovoBeneficiario(form, nomeSel, cfSel, prefillNome) {
+    if (!window.egAnagraficaModal) return;
+    var nome = form.querySelector(nomeSel);
+    var cf = cfSel ? form.querySelector(cfSel) : null;
+    window.egAnagraficaModal.apriBeneficiario(
+      {
+        denominazione: prefillNome || (nome && nome.value) || "",
+        cf_piva: (cf && cf.value) || ""
+      },
+      function (item) { applicaBeneficiario(form, nomeSel, cfSel, item); }
+    );
+  }
+
+  function bindAggiungi(form, btnSel, nomeSel, cfSel) {
+    var btn = form.querySelector(btnSel);
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      apriNuovoBeneficiario(form, nomeSel, cfSel);
+    });
   }
 
   function setIfEmpty(form, name, value) {
@@ -40,8 +74,11 @@
     );
     bindField(
       '#form-buono [name="beneficiario"]',
-      formBuono.getAttribute("data-ac-beneficiari")
+      formBuono.getAttribute("data-ac-beneficiari"),
+      null,
+      function (q) { apriNuovoBeneficiario(formBuono, '[name="beneficiario"]', null, q); }
     );
+    bindAggiungi(formBuono, '[data-eg-add="beneficiario"]', '[name="beneficiario"]', null);
   }
 
   var formMov = document.getElementById("form-movimento");
@@ -49,12 +86,9 @@
     bindField(
       '#form-movimento [name="beneficiario_fornitore"]',
       formMov.getAttribute("data-ac-beneficiari"),
-      function (item) {
-        var piva = formMov.querySelector('[name="cf_piva"]');
-        if (piva && item.cf_piva) {
-          piva.value = item.cf_piva;
-        }
-      }
+      function (item) { applicaBeneficiario(formMov, '[name="beneficiario_fornitore"]', '[name="cf_piva"]', item); },
+      function (q) { apriNuovoBeneficiario(formMov, '[name="beneficiario_fornitore"]', '[name="cf_piva"]', q); }
     );
+    bindAggiungi(formMov, '[data-eg-add="beneficiario"]', '[name="beneficiario_fornitore"]', '[name="cf_piva"]');
   }
 })();
