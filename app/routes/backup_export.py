@@ -1,8 +1,11 @@
 from datetime import date
+from pathlib import Path
+from urllib.parse import urlparse
 
-from flask import Blueprint, flash, redirect, render_template, request, send_file, url_for
+from flask import Blueprint, abort, flash, redirect, render_template, request, send_file, session, url_for
 from flask_login import login_required
 
+from app.config import INSTANCE_DIR
 from app.services.backup_zip import esegui_backup_zip
 from app.services.excel_export import (
     export_buoni_excel,
@@ -36,15 +39,38 @@ def audit_list():
     return render_template("strumenti/audit.html", rows=rows)
 
 
+def _torna_indietro() -> str:
+    """Ritorna al referrer solo se è questo stesso sito."""
+    ref = request.referrer or ""
+    parte = urlparse(ref)
+    if parte.scheme in ("http", "https") and parte.netloc == request.host and parte.path.startswith("/"):
+        return ref
+    return url_for("main.dashboard")
+
+
 @bp.route("/backup", methods=["POST"])
 @login_required
 def backup():
     ok, msg, path = esegui_backup_zip()
-    if ok and path:
-        flash(msg, "success")
-        return send_file(path, as_attachment=True, download_name=path.name)
-    flash(msg, "danger")
-    return redirect(url_for("backup_export.index"))
+    if not ok or path is None:
+        flash(msg, "danger")
+        return redirect(_torna_indietro())
+    session["backup_da_scaricare"] = path.name
+    flash(msg, "success")
+    return redirect(_torna_indietro())
+
+
+@bp.route("/backup/scarica")
+@login_required
+def backup_scarica():
+    nome = session.pop("backup_da_scaricare", None)
+    if not nome or Path(nome).name != nome:
+        abort(404)
+    base = (INSTANCE_DIR / "backups").resolve()
+    path = (base / nome).resolve()
+    if base not in path.parents or not path.is_file():
+        abort(404)
+    return send_file(path, as_attachment=True, download_name=path.name)
 
 
 @bp.route("/export/movimenti")

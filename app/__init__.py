@@ -40,10 +40,39 @@ def create_app(config_name: str | None = None) -> Flask:
 
     @app.template_filter("eur")
     def _eur(v):
-        try:
-            return f"€ {float(v):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-        except (TypeError, ValueError):
-            return "€ —"
+        from app.services.euro import formato_euro
+
+        return formato_euro(v)
+
+    @app.template_filter("eur_segno")
+    def _eur_segno(v):
+        from app.services.euro import formato_euro
+
+        return formato_euro(v, con_segno=True)
+
+    @app.template_filter("effetto_cassa")
+    def _effetto_cassa(m):
+        from app.services.cassa import effetto_su_cassa
+
+        return effetto_su_cassa(m)
+
+    @app.template_filter("effetto_conto")
+    def _effetto_conto(m):
+        from app.services.cassa import effetto_su_conto
+
+        return effetto_su_conto(m)
+
+    @app.template_filter("tipo_badge")
+    def _tipo_badge(m):
+        from app.services.movimento_badge import badge_tipo
+
+        return badge_tipo(m.tipo)
+
+    @app.template_filter("stato_badge")
+    def _stato_badge(m):
+        from app.services.movimento_badge import badge_stato
+
+        return badge_stato(m.stato)
 
     @app.template_filter("data_ora_cassa")
     def _data_ora_cassa(m):

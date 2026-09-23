@@ -147,7 +147,7 @@ def raccogli_alert(anno: int) -> list[dict]:
                 out.append(
                     {
                         "livello": "danger",
-                        "testo": f"Movimento {m.numero_progressivo:04d} modificato dopo generazione verbale T{m.trimestre}.",
+                        "testo": f"Movimento {formato_numero_sezionale(m)} modificato dopo generazione verbale T{m.trimestre}.",
                     }
                 )
                 break

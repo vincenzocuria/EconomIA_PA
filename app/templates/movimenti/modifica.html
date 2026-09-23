@@ -24,22 +24,36 @@
     <div class="col-md-3">{{ form.tipo.label(class="form-label") }}{{ form.tipo(class="form-select") }}</div>
     <div class="col-md-3">{{ form.importo.label(class="form-label") }}{{ form.importo(class="form-control") }}</div>
     <div class="col-12">{{ form.causale.label(class="form-label") }}{{ form.causale(class="form-control", rows=2) }}</div>
-    <div class="col-md-6">
-      {{ form.beneficiario_fornitore.label(class="form-label") }}
-      <div class="d-flex gap-2 align-items-stretch">
-        <div class="flex-grow-1 min-w-0">
-          {{ form.beneficiario_fornitore(class="form-control") }}
+    <div id="blocco-spesa" class="col-12">
+      <div class="row g-3">
+        <div class="col-md-6">
+          {{ form.beneficiario_fornitore.label(class="form-label") }}
+          <div class="d-flex gap-2 align-items-stretch">
+            <div class="flex-grow-1 min-w-0">
+              {{ form.beneficiario_fornitore(class="form-control") }}
+            </div>
+            <button type="button" class="btn btn-outline-secondary px-3 flex-shrink-0" data-eg-add="beneficiario" title="Nuovo fornitore" aria-label="Nuovo fornitore">+</button>
+          </div>
+          <div class="form-text"><a href="{{ url_for('anagrafiche.lista', tab='fornitori') }}">Gestisci fornitori</a></div>
         </div>
-        <button type="button" class="btn btn-outline-secondary px-3 flex-shrink-0" data-eg-add="beneficiario" title="Nuovo fornitore" aria-label="Nuovo fornitore">+</button>
+        <div class="col-md-6">{{ form.cf_piva.label(class="form-label") }}{{ form.cf_piva(class="form-control") }}</div>
+        <div class="col-md-6">
+          {{ form.buono_id.label(class="form-label") }}{{ form.buono_id(class="form-select") }}
+          <div class="form-text">Solo se il buono esiste già. Per un’uscita nuova ti verrà proposto dopo il salvataggio.</div>
+        </div>
+        <div class="col-md-6">{{ form.modalita_pagamento.label(class="form-label") }}{{ form.modalita_pagamento(class="form-control", placeholder="contanti") }}</div>
+        <div class="col-md-4">{{ form.num_documento_fiscale.label(class="form-label") }}{{ form.num_documento_fiscale(class="form-control") }}</div>
+        <div class="col-md-4">{{ form.data_documento_fiscale.label(class="form-label") }}{{ form.data_documento_fiscale(class="form-control") }}</div>
+        <div class="col-md-4">{{ form.capitolo_riferimento.label(class="form-label") }}{{ form.capitolo_riferimento(class="form-control") }}</div>
+        <div class="col-12">
+          <div class="form-check">
+            {{ form.da_giustificare(class="form-check-input") }}
+            {{ form.da_giustificare.label(class="form-check-label") }}
+          </div>
+          <div class="form-text">Usa quando hai già dato i soldi ma lo scontrino/ricevuta arriva dopo.</div>
+        </div>
       </div>
-      <div class="form-text"><a href="{{ url_for('anagrafiche.lista', tab='fornitori') }}">Gestisci fornitori</a></div>
     </div>
-    <div class="col-md-6">{{ form.cf_piva.label(class="form-label") }}{{ form.cf_piva(class="form-control") }}</div>
-    <div class="col-md-6">
-      {{ form.buono_id.label(class="form-label") }}{{ form.buono_id(class="form-select") }}
-      <div class="form-text">Solo se il buono esiste già. Per un’uscita nuova ti verrà proposto dopo il salvataggio.</div>
-    </div>
-    <div class="col-md-6">{{ form.modalita_pagamento.label(class="form-label") }}{{ form.modalita_pagamento(class="form-control", placeholder="contanti") }}</div>
     <div id="blocco-banca" class="col-12">
       <div class="row g-3">
         <div class="col-md-6">{{ form.filiale_id.label(class="form-label") }}{{ form.filiale_id(class="form-select") }}
@@ -53,17 +67,7 @@
       {{ form.allegato_ricevuta(class="form-control") }}
       <div class="form-text">PDF o immagine (ricevuta prelievo/versamento, scontrino, ecc.).</div>
     </div>
-    <div class="col-md-4">{{ form.num_documento_fiscale.label(class="form-label") }}{{ form.num_documento_fiscale(class="form-control") }}</div>
-    <div class="col-md-4">{{ form.data_documento_fiscale.label(class="form-label") }}{{ form.data_documento_fiscale(class="form-control") }}</div>
-    <div class="col-md-4">{{ form.capitolo_riferimento.label(class="form-label") }}{{ form.capitolo_riferimento(class="form-control") }}</div>
     <div class="col-md-4">{{ form.stato.label(class="form-label") }}{{ form.stato(class="form-select") }}</div>
-    <div class="col-12">
-      <div class="form-check">
-        {{ form.da_giustificare(class="form-check-input") }}
-        {{ form.da_giustificare.label(class="form-check-label") }}
-      </div>
-      <div class="form-text">Usa quando hai già dato i soldi ma lo scontrino/ricevuta arriva dopo.</div>
-    </div>
     <div class="col-12">{{ form.note.label(class="form-label") }}{{ form.note(class="form-control", rows=2) }}</div>
   </div>
   <div class="mt-4 d-flex flex-wrap gap-2">
@@ -99,7 +103,7 @@
 {% endif %}
 
 <p class="small text-muted mt-3">Per rettifiche contabili usare tipo «rettifica» con importo firmato (+/−) coerente con le istruzioni interne.</p>
-<p class="small text-muted">Filiale e riferimento ricevuta compaiono solo per prelievi e versamenti bancari.</p>
+<p class="small text-muted">Per prelievi e versamenti: filiale, riferimento ricevuta e allegato. Fornitore, buono, documento fiscale e capitolo restano solo per gli altri tipi.</p>
 {% include "anagrafiche/_modal_beneficiario.html" %}
 {% endblock %}
 {% block scripts %}

@@ -4,8 +4,7 @@
 
   var tipo = form.querySelector('[name="tipo"]');
   var blocco = document.getElementById("blocco-banca");
-  var filiale = form.querySelector('[name="filiale_id"]');
-  var rif = form.querySelector('[name="rif_ricevuta"]');
+  var bloccoSpesa = document.getElementById("blocco-spesa");
   var sezionale = form.querySelector('[name="sezionale_id"]');
   var numero = form.querySelector('[name="numero_progressivo"]');
   var urlProssimo = form.getAttribute("data-prossimo-url");
@@ -18,14 +17,31 @@
     defaultsSez = {};
   }
 
-  function aggiornaBanca() {
-    if (!blocco || !tipo) return;
-    var bancario = !!tipiBanca[tipo.value];
-    blocco.classList.toggle("d-none", !bancario);
-    if (!bancario) {
-      if (filiale) filiale.value = "0";
-      if (rif) rif.value = "";
+  function svuotaCampo(el) {
+    if (!el) return;
+    if (el.type === "checkbox" || el.type === "radio") {
+      el.checked = false;
+      return;
     }
+    if (el.tagName === "SELECT") {
+      el.value = el.querySelector('option[value="0"]') ? "0" : "";
+      return;
+    }
+    if (el.type !== "file") el.value = "";
+  }
+
+  function svuotaDentro(box) {
+    if (!box) return;
+    box.querySelectorAll("input, select, textarea").forEach(svuotaCampo);
+  }
+
+  function aggiornaBanca() {
+    if (!tipo) return;
+    var bancario = !!tipiBanca[tipo.value];
+    if (blocco) blocco.classList.toggle("d-none", !bancario);
+    if (bloccoSpesa) bloccoSpesa.classList.toggle("d-none", bancario);
+    if (bancario) svuotaDentro(bloccoSpesa);
+    else svuotaDentro(blocco);
   }
 
   function proponiNumero() {

@@ -16,9 +16,16 @@ from app.services.anagrafiche_sync import sync_da_movimento
 from app.services.audit_log import scrivi_audit
 from app.services.filiali_scelte import scelte_filiale_per_movimento
 from app.services.giustificativo import segna_giustificato
+from app.services.movimento_badge import scelte_stato_movimento
 from app.services.movimento_tipi import scelte_tipo_movimento
+from app.services.movimenti_filtri import (
+    filtri_attivi,
+    parametri_filtro,
+    query_movimenti,
+    scelte_periodo,
+)
+from app.services.movimenti_kpi import kpi_movimenti_anno
 from app.services.numero_display import formato_numero_sezionale
-from app.services.movimenti_senza_allegato import query_senza_allegato
 from app.services.progressivi import numero_movimento_libero, prossimo_numero_movimento
 from app.services.sezionali_scelte import (
     scelte_sezionale,
@@ -99,10 +106,19 @@ def _popola_form_movimento(form: MovimentoForm, anno: int, m: Movimento | None =
         form.stato.data = m.stato.value
 
 
-def _azzera_campi_banca_se_serve(m: Movimento) -> None:
-    if m.tipo not in TIPI_BANCA:
-        m.filiale_id = None
-        m.rif_ricevuta = ""
+def _adatta_campi_al_tipo(m: Movimento) -> None:
+    if m.tipo in TIPI_BANCA:
+        m.beneficiario_fornitore = ""
+        m.cf_piva = ""
+        m.buono_id = None
+        m.modalita_pagamento = ""
+        m.num_documento_fiscale = ""
+        m.data_documento_fiscale = None
+        m.capitolo_riferimento = ""
+        m.da_giustificare = False
+        return
+    m.filiale_id = None
+    m.rif_ricevuta = ""
 
 
 def _movimento_da_form(
@@ -140,7 +156,7 @@ def _movimento_da_form(
     m.da_giustificare = bool(form.da_giustificare.data)
     m.stato = StatoMovimento(form.stato.data)
     m.trimestre = trimestre_da_data(m.data_movimento)
-    _azzera_campi_banca_se_serve(m)
+    _adatta_campi_al_tipo(m)
     sync_da_movimento(m.beneficiario_fornitore, m.cf_piva)
     return m
 
@@ -160,22 +176,19 @@ def _ctx_form(anno: int, m: Movimento | None = None) -> dict:
 @login_required
 def lista():
     anno = int(request.args.get("anno", date.today().year))
-    filtro_da_giustificare = request.args.get("da_giustificare") == "1"
-    filtro_senza_allegato = request.args.get("senza_allegato") == "1"
-    if filtro_senza_allegato:
-        q = query_senza_allegato(anno)
-    else:
-        q = Movimento.query.filter_by(anno=anno)
-        if filtro_da_giustificare:
-            q = q.filter_by(da_giustificare=True)
-        q = q.order_by(Movimento.numero_progressivo.desc())
-    rows = q.all()
+    filtri = parametri_filtro(request.args)
+    rows = query_movimenti(anno, filtri).all()
     return render_template(
         "movimenti/lista.html",
         rows=rows,
         anno=anno,
-        filtro_da_giustificare=filtro_da_giustificare and not filtro_senza_allegato,
-        filtro_senza_allegato=filtro_senza_allegato,
+        filtri=filtri,
+        filtri_on=filtri_attivi(filtri),
+        kpi=kpi_movimenti_anno(anno),
+        tipi_scelte=scelte_tipo_movimento(),
+        stati_scelte=scelte_stato_movimento(),
+        sezionali_scelte=scelte_sezionale(),
+        periodi=scelte_periodo(),
     )
 
 

@@ -20,7 +20,7 @@ def query_senza_allegato(anno: int):
             Movimento.stato != StatoMovimento.stornato,
             Movimento.tipo.in_(TIPI_SENZA_ALLEGATO),
             ~ha_allegato,
-        ).order_by(Movimento.numero_progressivo.desc())
+        )
     )
 
 

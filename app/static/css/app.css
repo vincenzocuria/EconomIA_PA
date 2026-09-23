@@ -20,6 +20,19 @@ tr[data-href] {
 tr[data-href]:hover > * {
   --bs-table-bg-state: var(--bs-tertiary-bg);
 }
+.eg-sort {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.eg-sort[aria-sort="ascending"]::after { content: " ↑"; }
+.eg-sort[aria-sort="descending"]::after { content: " ↓"; }
+tr[data-registro-riga][hidden] { display: none !important; }
 .eg-ac-wrap {
   position: relative;
 }

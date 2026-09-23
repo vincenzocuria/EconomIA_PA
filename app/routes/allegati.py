@@ -17,6 +17,7 @@ from app.services.audit_log import scrivi_audit
 from app.services.file_hash import sha256_file
 from app.services.giustificativo import segna_giustificato
 from app.services.movimento_scelte import scelte_movimento
+from app.services.numero_display import formato_numero_sezionale
 from app.services.upload_allegato import (
     estensione_consentita,
     mime_consentito_per_estensione,
@@ -31,7 +32,7 @@ bp = Blueprint("allegati", __name__, url_prefix="/allegati")
 def _buoni_scelte(anno: int):
     opts = [(0, "— Nessun buono —")]
     for b in BuonoEconomale.query.filter_by(anno=anno).order_by(BuonoEconomale.numero_progressivo.desc()):
-        opts.append((b.id, f"{b.numero_progressivo:04d}/{b.anno}"))
+        opts.append((b.id, formato_numero_sezionale(b)))
     return opts
 
 

@@ -18,7 +18,7 @@ from app.services.docx_tabelle import (
 )
 from app.services.economo_testo import nome_da_economo
 from app.services.firme_rimborso import LINEA_FIRMA, linee_firma_modulo
-from app.services.numero_display import formato_numero_sezionale
+from app.services.numero_display import formato_numero_sezionale, parte_file_progressivo
 
 _FONT = 11
 _FONT_TITOLO = 13
@@ -77,7 +77,7 @@ def _para(
 def genera_docx_rimborso(b: BuonoEconomale) -> Path:
     out_dir = INSTANCE_DIR / "buoni_docx"
     out_dir.mkdir(parents=True, exist_ok=True)
-    path = out_dir / f"modulo_rimborso_{b.anno}_{b.numero_progressivo:04d}.docx"
+    path = out_dir / f"modulo_rimborso_{b.anno}_{parte_file_progressivo(b)}.docx"
 
     num = formato_numero_sezionale(b)
     importo = _eur(b.importo_speso or b.importo_autorizzato)

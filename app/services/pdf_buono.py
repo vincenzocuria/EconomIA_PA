@@ -9,14 +9,14 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 
 from app.config import INSTANCE_DIR
 from app.models.buono import BuonoEconomale
-from app.services.numero_display import formato_numero_sezionale
+from app.services.numero_display import formato_numero_sezionale, parte_file_progressivo
 from app.services.pdf_base import disclaimer_registro, intestazione_flowables
 
 
 def genera_pdf_buono(b: BuonoEconomale) -> Path:
     pdf_dir = INSTANCE_DIR / "buoni_pdf"
     pdf_dir.mkdir(parents=True, exist_ok=True)
-    path = pdf_dir / f"buono_{b.anno}_{b.numero_progressivo:04d}.pdf"
+    path = pdf_dir / f"buono_{b.anno}_{parte_file_progressivo(b)}.pdf"
 
     styles = getSampleStyleSheet()
     h1 = ParagraphStyle(
