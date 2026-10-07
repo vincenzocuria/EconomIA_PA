@@ -15,4 +15,8 @@ def applica_schema_economo() -> None:
             db.session.execute(
                 text(f"ALTER TABLE economo_settings ADD COLUMN {col} VARCHAR(500) DEFAULT ''")
             )
+    if "email_chiusura" not in names:
+        db.session.execute(
+            text("ALTER TABLE economo_settings ADD COLUMN email_chiusura TEXT DEFAULT ''")
+        )
     db.session.commit()

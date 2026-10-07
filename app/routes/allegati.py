@@ -14,6 +14,7 @@ from app.models.allegato import Allegato, TipoAllegato
 from app.models.buono import BuonoEconomale
 from app.models.movimento import Movimento
 from app.services.audit_log import scrivi_audit
+from app.services.chiusura_blocco import rifiuta_se_chiuso
 from app.services.file_hash import sha256_file
 from app.services.giustificativo import segna_giustificato
 from app.services.movimento_scelte import scelte_movimento
@@ -90,6 +91,10 @@ def carica():
         return redirect(url_for("allegati.lista", anno=anno))
     m = Movimento.query.get(mid) if mid else None
     b = BuonoEconomale.query.get(bid) if bid else None
+    if m and rifiuta_se_chiuso(m.anno, m.data_movimento):
+        return redirect(url_for("allegati.lista", anno=anno))
+    if b and rifiuta_se_chiuso(b.anno, b.data_buono):
+        return redirect(url_for("allegati.lista", anno=anno))
     data_doc = date.today()
     if m or b:
         prefisso = "MOV" if m else "BUO"
@@ -149,6 +154,10 @@ def file_(id: int):
 @login_required
 def ruota(id: int):
     a = Allegato.query.get_or_404(id)
+    if a.movimento and rifiuta_se_chiuso(a.movimento.anno, a.movimento.data_movimento):
+        return redirect(url_for("allegati.lista"))
+    if a.buono and rifiuta_se_chiuso(a.buono.anno, a.buono.data_buono):
+        return redirect(url_for("allegati.lista"))
     path = INSTANCE_DIR / a.filename_stored
     if not path.suffix.lower().lstrip(".") in ("jpg", "jpeg", "png", "webp"):
         flash("Rotazione disponibile solo per immagini.", "warning")

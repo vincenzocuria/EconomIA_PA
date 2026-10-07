@@ -43,6 +43,13 @@
   </div>
   <div class="col-12">
     <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white fw-semibold">Chiusura trimestre</div>
+      <div class="card-body">
+        <p class="small text-muted mb-2">Fascicolo completo, controlli mancanti e mail di stato. La chiusura blocca i movimenti del periodo.</p>
+        <a class="btn btn-outline-primary" href="{{ url_for('chiusura.lista', anno=anno) }}">Apri chiusura trimestre</a>
+      </div>
+    </div>
+    <div class="card border-0 shadow-sm mb-4">
       <div class="card-header bg-white fw-semibold">Tracciato</div>
       <div class="card-body">
         <a class="btn btn-outline-secondary" href="{{ url_for('backup_export.audit_list') }}">Registro modifiche e operazioni</a>

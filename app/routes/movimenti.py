@@ -14,6 +14,7 @@ from app.models.sezionale import Sezionale
 from app.services.allega_a_movimento import allega_file_a_movimento
 from app.services.anagrafiche_sync import sync_da_movimento
 from app.services.audit_log import scrivi_audit
+from app.services.chiusura_blocco import rifiuta_se_chiuso
 from app.services.filiali_scelte import scelte_filiale_per_movimento
 from app.services.giustificativo import segna_giustificato
 from app.services.movimento_badge import scelte_stato_movimento
@@ -235,6 +236,8 @@ def nuovo():
             flash("Sezionale non valido.", "danger")
         elif not numero_movimento_libero(anno, sez_id, num):
             flash("Numero già usato in questo sezionale/anno. Scegline un altro.", "danger")
+        elif rifiuta_se_chiuso(anno, form.data_movimento.data):
+            pass
         else:
             m = _movimento_da_form(form, anno, num, sez_id, None)
             db.session.add(m)
@@ -284,6 +287,7 @@ def modifica(id: int):
     form.filiale_id.choices = scelte_filiale_per_movimento(m)
     form.sezionale_id.choices = scelte_sezionale(m.sezionale_id)
     if request.method == "GET":
+        rifiuta_se_chiuso(m.anno, m.data_movimento)
         _popola_form_movimento(form, m.anno, m)
     if form.validate_on_submit():
         sez_id = form.sezionale_id.data
@@ -292,6 +296,8 @@ def modifica(id: int):
             flash("Sezionale non valido.", "danger")
         elif not numero_movimento_libero(m.anno, sez_id, num, escludi_id=m.id):
             flash("Numero già usato in questo sezionale/anno. Scegline un altro.", "danger")
+        elif rifiuta_se_chiuso(m.anno, m.data_movimento, form.data_movimento.data):
+            pass
         else:
             prima = {
                 "importo": str(m.importo),
@@ -321,6 +327,8 @@ def giustifica(id: int):
     if m.stato == StatoMovimento.stornato:
         flash("Movimento stornato: non modificabile.", "warning")
         return redirect(url_for("movimenti.lista", anno=m.anno))
+    if rifiuta_se_chiuso(m.anno, m.data_movimento):
+        return redirect(url_for("movimenti.dettaglio", id=m.id))
     if segna_giustificato(m):
         db.session.commit()
         scrivi_audit("movimento", m.id, "giustificato", {})
@@ -338,7 +346,11 @@ def storno(id: int):
         flash("Movimento già stornato.", "warning")
         return redirect(url_for("movimenti.lista", anno=orig.anno))
     form = StornoForm()
+    if request.method == "GET":
+        rifiuta_se_chiuso(orig.anno, orig.data_movimento)
     if form.validate_on_submit():
+        if rifiuta_se_chiuso(orig.anno, orig.data_movimento, date.today()):
+            return redirect(url_for("movimenti.dettaglio", id=orig.id))
         orig.stato = StatoMovimento.stornato
         sez_id = orig.sezionale_id
         if sez_id is None:

@@ -17,6 +17,11 @@
     <div class="col-md-6">{{ form.delibera_nomina.label(class="form-label") }}{{ form.delibera_nomina(class="form-control") }}</div>
     <div class="col-md-6">{{ form.telefono.label(class="form-label") }}{{ form.telefono(class="form-control") }}</div>
     <div class="col-md-6">{{ form.email.label(class="form-label") }}{{ form.email(class="form-control") }}</div>
+    <div class="col-12">
+      {{ form.email_chiusura.label(class="form-label") }}
+      {{ form.email_chiusura(class="form-control", rows=2, placeholder="Revisore, ragioneria, altri. Una email per riga o separate da virgola.") }}
+      <div class="form-text">Ricevono la mail di stato e quella automatica quando il trimestre si chiude o si riapre, insieme all'email dell'economo e dell'ente.</div>
+    </div>
     <div class="col-12">{{ form.note.label(class="form-label") }}{{ form.note(class="form-control", rows=3) }}</div>
     <div class="col-md-6">
       {{ form.determina.label(class="form-label") }}

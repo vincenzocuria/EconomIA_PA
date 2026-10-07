@@ -16,6 +16,7 @@ from app.services.buoni_filtri import filtri_attivi, parametri_filtro, query_buo
 from app.services.buoni_kpi import kpi_buoni_anno
 from app.services.buoni_senza_firma import ids_senza_firma
 from app.services.buono_da_movimento import collega_movimento_a_buono, valori_precompilati_da_movimento
+from app.services.chiusura_blocco import rifiuta_se_chiuso
 from app.services.docx_rimborso import genera_docx_rimborso
 from app.services.pdf_buono import genera_pdf_buono
 from app.services.progressivi import numero_buono_libero, prossimo_numero_buono
@@ -150,6 +151,8 @@ def nuovo():
             flash("Sezionale non valido.", "danger")
         elif not numero_buono_libero(anno, sez_id, num):
             flash("Numero già usato in questo sezionale/anno. Scegline un altro.", "danger")
+        elif rifiuta_se_chiuso(anno, form.data_buono.data):
+            pass
         else:
             b = _buono_da_form(form, anno, num, sez_id, None)
             db.session.add(b)
@@ -185,6 +188,7 @@ def modifica(id: int):
     form = BuonoForm()
     form.sezionale_id.choices = scelte_sezionale(b.sezionale_id)
     if request.method == "GET":
+        rifiuta_se_chiuso(b.anno, b.data_buono)
         _popola_buono(form, b)
     if form.validate_on_submit():
         sez_id = form.sezionale_id.data
@@ -193,6 +197,8 @@ def modifica(id: int):
             flash("Sezionale non valido.", "danger")
         elif not numero_buono_libero(b.anno, sez_id, num, escludi_id=b.id):
             flash("Numero già usato in questo sezionale/anno. Scegline un altro.", "danger")
+        elif rifiuta_se_chiuso(b.anno, b.data_buono, form.data_buono.data):
+            pass
         else:
             _buono_da_form(form, b.anno, num, sez_id, b)
             db.session.commit()
@@ -241,6 +247,8 @@ def modulo_rimborso(id: int):
 @login_required
 def carica_firmato(id: int):
     b = BuonoEconomale.query.get_or_404(id)
+    if rifiuta_se_chiuso(b.anno, b.data_buono):
+        return redirect_interno(url_for("buoni.modifica", id=b.id))
     ok, err = carica_modulo_firmato(b, request.files.get("allegato_firmato"))
     if not ok and err is None:
         flash("Seleziona il file del modulo firmato (PDF o immagine).", "warning")
@@ -255,8 +263,10 @@ def carica_firmato(id: int):
 @login_required
 def chiudi(id: int):
     b = BuonoEconomale.query.get_or_404(id)
+    if rifiuta_se_chiuso(b.anno, b.data_buono):
+        return redirect_interno(url_for("buoni.lista", anno=b.anno))
     b.stato = StatoBuono.chiuso
     db.session.commit()
     scrivi_audit("buono", b.id, "chiusura", {})
     flash("Buono chiuso.", "success")
-    return redirect(url_for("buoni.lista", anno=b.anno))
+    return redirect_interno(url_for("buoni.lista", anno=b.anno))

@@ -31,6 +31,7 @@ class EconomoForm(FlaskForm):
     delibera_nomina = StringField("Riferimento delibera di nomina")
     telefono = StringField("Telefono")
     email = StringField("Email")
+    email_chiusura = TextAreaField("Email chiusura trimestre")
     note = TextAreaField("Note")
     determina = FileField(
         "Determina (PDF/immagine)",

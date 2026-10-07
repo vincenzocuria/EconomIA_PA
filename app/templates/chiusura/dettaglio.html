@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block title %}Chiusura T{{ trimestre }} {{ anno }} — EconomIA_PA{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <a class="small text-decoration-none" href="{{ url_for('chiusura.lista', anno=anno) }}">← Tutti i trimestri</a>
+    <h1 class="h3 mb-0">Chiusura T{{ trimestre }} {{ anno }}</h1>
+  </div>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('chiusura.prospetto', anno=anno, trimestre=trimestre) }}">Prospetto pagamenti</a>
+    <a class="btn btn-sm btn-outline-primary" href="{{ url_for('chiusura.giornale', anno=anno, trimestre=trimestre) }}">Giornale di cassa</a>
+  </div>
+</div>
+
+{% if esito.chiusa %}
+<div class="alert alert-success">
+  Trimestre chiuso{% if row and row.chiusa_il %} il {{ row.chiusa_il.strftime('%d/%m/%Y %H:%M') }}{% endif %}.
+  I movimenti di questo periodo non si modificano.
+</div>
+{% elif esito.pronto and esito.dovuto %}
+<div class="alert alert-info">Fascicolo completo: si può chiudere il trimestre. La mail parte insieme alla chiusura.</div>
+{% elif not esito.dovuto %}
+<div class="alert alert-secondary">Il trimestre è ancora in corso. Puoi preparare il fascicolo; la chiusura si abilita a periodo terminato.</div>
+{% else %}
+<div class="alert alert-warning">Mancano {{ esito.n_mancanti }} controlli. La chiusura resta bloccata finché non sono tutti a posto.</div>
+{% endif %}
+{% if esito.chiusa and not esito.pronto %}
+<div class="alert alert-danger">Il trimestre risulta chiuso, ma il fascicolo non è più coerente con i controlli. Riapri solo se devi correggere.</div>
+{% endif %}
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white fw-semibold">Manca ({{ esito.mancanti|length }})</div>
+      <ul class="list-group list-group-flush">
+        {% for v in esito.mancanti %}
+        <li class="list-group-item">
+          <div class="fw-semibold text-danger">{{ v.titolo }}</div>
+          <div class="small text-muted">{{ v.dettaglio }}</div>
+          {% if v.mancanti %}
+          <ul class="small mt-2 mb-0">
+            {% for item in v.mancanti %}
+            <li class="mb-2">
+              <a href="{{ item.url }}">{{ item.etichetta }}</a>
+              {% if item.upload == 'quietanza' and not esito.chiusa %}
+              <form class="d-flex flex-wrap gap-2 mt-1" method="post" enctype="multipart/form-data" action="{{ url_for('chiusura.carica_quietanza', anno=anno, trimestre=trimestre, buono_id=item.buono_id) }}">
+                {{ quietanza_form.hidden_tag() }}
+                {{ quietanza_form.file(class="form-control form-control-sm", style="max-width:18rem", id="quietanza-" ~ item.buono_id) }}
+                <button class="btn btn-sm btn-outline-primary" type="submit">Allega quietanza</button>
+              </form>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </li>
+        {% else %}
+        <li class="list-group-item text-muted small">Nessun controllo bloccante aperto.</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white fw-semibold">A posto ({{ esito.presenti|length }})</div>
+      <ul class="list-group list-group-flush small">
+        {% for v in esito.presenti %}
+        <li class="list-group-item">
+          <span class="fw-semibold text-success">{{ v.titolo }}</span>
+          <div class="text-muted">{{ v.dettaglio }}</div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% if esito.avvisi %}
+      <div class="card-header bg-white fw-semibold border-top">Avvisi, non bloccano</div>
+      <ul class="list-group list-group-flush small">
+        {% for v in esito.avvisi %}
+        <li class="list-group-item">
+          <span class="fw-semibold">{{ v.titolo }}</span>
+          <div class="text-muted">{{ v.dettaglio }}</div>
+          {% for item in v.mancanti %}
+          <a href="{{ item.url }}">{{ item.etichetta }}</a>
+          {% endfor %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% set q = esito.quadratura %}
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white fw-semibold">Numeri del trimestre (dal registro)</div>
+  <div class="card-body">
+    <div class="row g-3 small">
+      <div class="col-md-3"><div class="text-muted">Giacenza inizio</div><div class="fw-semibold">{{ q.giacenza_inizio|eur }}</div></div>
+      <div class="col-md-3"><div class="text-muted">Prelievi</div><div class="fw-semibold">{{ q.totale_prelievi|eur }}</div></div>
+      <div class="col-md-3"><div class="text-muted">Pagamenti</div><div class="fw-semibold">{{ q.totale_uscite|eur }}</div></div>
+      <div class="col-md-3"><div class="text-muted">Giacenza fine</div><div class="fw-semibold">{{ q.giacenza_fine|eur }}</div></div>
+      <div class="col-md-3"><div class="text-muted">Conto inizio (registro)</div><div class="fw-semibold">{{ q.conto_inizio|eur }}</div></div>
+      <div class="col-md-3"><div class="text-muted">Variazione conto</div><div class="fw-semibold">{{ q.delta_conto|eur_segno }}</div></div>
+      <div class="col-md-3"><div class="text-muted">Voci estratto</div><div class="fw-semibold">{{ q.somma_voci|eur_segno }}</div></div>
+      <div class="col-md-3"><div class="text-muted">Scostamento</div><div class="fw-semibold {% if q.scostamento is not none and q.scostamento != 0 %}text-danger{% endif %}">{% if q.scostamento is none %}—{% else %}{{ q.scostamento|eur }}{% endif %}</div></div>
+    </div>
+    <p class="small text-muted mb-0 mt-3">
+      Lo scostamento è zero quando (saldo finale estratto − saldo iniziale) coincide con la variazione del registro più le voci che non passano dalla cassa, come l'anticipazione fondi o le competenze bancarie.
+    </p>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-white fw-semibold">Documenti di banca</div>
+      <div class="card-body">
+        {% if esito.chiusa %}
+        <ul class="small mb-0">
+          <li>Estratto: {% if estratto_ok %}<a href="{{ url_for('chiusura.file_fascicolo', anno=anno, trimestre=trimestre, chiave='estratto') }}">apri</a>{% else %}manca{% endif %}</li>
+          <li>Promemoria: {% if promemoria_ok %}<a href="{{ url_for('chiusura.file_fascicolo', anno=anno, trimestre=trimestre, chiave='promemoria') }}">apri</a>{% else %}manca{% endif %}</li>
+          {% if row and row.note %}<li>Note: {{ row.note }}</li>{% endif %}
+        </ul>
+        {% else %}
+        <form method="post" enctype="multipart/form-data" action="{{ url_for('chiusura.salva_fascicolo', anno=anno, trimestre=trimestre) }}">
+          {{ form.hidden_tag() }}
+          <div class="row g-3">
+            <div class="col-md-6">
+              {{ form.saldo_estratto_iniziale.label(class="form-label") }}
+              {{ form.saldo_estratto_iniziale(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.saldo_estratto_finale.label(class="form-label") }}
+              {{ form.saldo_estratto_finale(class="form-control") }}
+            </div>
+            <div class="col-md-6">
+              {{ form.estratto.label(class="form-label") }}
+              {{ form.estratto(class="form-control") }}
+              {% if estratto_ok %}<div class="form-text"><a href="{{ url_for('chiusura.file_fascicolo', anno=anno, trimestre=trimestre, chiave='estratto') }}">Estratto già caricato</a></div>{% endif %}
+            </div>
+            <div class="col-md-6">
+              {{ form.promemoria.label(class="form-label") }}
+              {{ form.promemoria(class="form-control") }}
+              {% if promemoria_ok %}<div class="form-text"><a href="{{ url_for('chiusura.file_fascicolo', anno=anno, trimestre=trimestre, chiave='promemoria') }}">Promemoria già caricato</a></div>{% endif %}
+            </div>
+            <div class="col-12">
+              {{ form.note.label(class="form-label") }}
+              {{ form.note(class="form-control", rows=2) }}
+            </div>
+          </div>
+          <button class="btn btn-primary mt-3" type="submit">Salva fascicolo</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white fw-semibold">Voci estratto fuori cassa</div>
+      <div class="card-body">
+        <p class="small text-muted">Anticipazione di fondi, interessi e ritenute: importo positivo se accredito sul conto, negativo se addebito.</p>
+        {% if row %}
+        <ul class="list-group list-group-flush small mb-3">
+          {% for v in q.voci %}
+          <li class="list-group-item d-flex justify-content-between align-items-center gap-2 px-0">
+            <span>{% if v.data_voce %}{{ v.data_voce.strftime('%d/%m/%Y') }} · {% endif %}{{ v.descrizione }}</span>
+            <span class="d-flex align-items-center gap-2">
+              <strong>{{ v.importo|eur_segno }}</strong>
+              {% if not esito.chiusa %}
+              <form method="post" action="{{ url_for('chiusura.elimina_voce', anno=anno, trimestre=trimestre, voce_id=v.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm btn-outline-danger" type="submit">Togli</button>
+              </form>
+              {% endif %}
+            </span>
+          </li>
+          {% else %}
+          <li class="list-group-item px-0 text-muted">Nessuna voce.</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if not esito.chiusa %}
+        <form method="post" action="{{ url_for('chiusura.aggiungi_voce', anno=anno, trimestre=trimestre) }}">
+          {{ voce_form.hidden_tag() }}
+          <div class="mb-2">{{ voce_form.data_voce.label(class="form-label") }}{{ voce_form.data_voce(class="form-control form-control-sm") }}</div>
+          <div class="mb-2">{{ voce_form.descrizione.label(class="form-label") }}{{ voce_form.descrizione(class="form-control form-control-sm", placeholder="Es. anticipazione fondi ECR") }}</div>
+          <div class="mb-2">{{ voce_form.importo.label(class="form-label") }}{{ voce_form.importo(class="form-control form-control-sm", placeholder="3000 oppure -1.53") }}</div>
+          <button class="btn btn-sm btn-outline-primary" type="submit">Aggiungi voce</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white fw-semibold">Notifica e chiusura</div>
+  <div class="card-body">
+    <p class="small text-muted mb-2">
+      Destinatari: {% if destinatari %}{{ destinatari|join(', ') }}{% else %}nessuno. Compila l'email in Dati economo o Dati ente, oppure il campo Email chiusura.{% endif %}
+      {% if not mail_attiva %} Resend non configurato: la mail non parte.{% endif %}
+      {% if row and row.ultima_notifica_esito %}
+      <br>Ultimo invio{% if row.ultima_notifica_il %} del {{ row.ultima_notifica_il.strftime('%d/%m/%Y %H:%M') }}{% endif %}: {{ row.ultima_notifica_esito }}
+      {% endif %}
+    </p>
+    <div class="d-flex flex-wrap gap-2">
+      <form method="post" action="{{ url_for('chiusura.notifica', anno=anno, trimestre=trimestre) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-outline-secondary" type="submit">Invia stato (presenti e mancanti)</button>
+      </form>
+      {% if not esito.chiusa %}
+      <form method="post" action="{{ url_for('chiusura.chiudi', anno=anno, trimestre=trimestre) }}" onsubmit="return confirm('Chiudere T{{ trimestre }} {{ anno }}? I movimenti del periodo non saranno più modificabili.');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-success" type="submit" {% if not esito.pronto or not esito.dovuto %}disabled{% endif %}>Chiudi trimestre</button>
+      </form>
+      {% else %}
+      <form method="post" action="{{ url_for('chiusura.riapri', anno=anno, trimestre=trimestre) }}" onsubmit="return confirm('Riaprire il trimestre? I movimenti tornano modificabili.');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-outline-warning" type="submit">Riapri trimestre</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

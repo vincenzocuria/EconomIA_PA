@@ -13,6 +13,7 @@ from app.services.incarico_periodo import trimestre_dovuto
 from app.services.buoni_kpi import kpi_buoni_anno
 from app.services.cassa import saldo_cassa_calcolato, saldo_conto_calcolato
 from app.services.buoni_senza_firma import conta_senza_firma
+from app.services.chiusura_checklist import voci_da_fare_chiusura
 from app.services.movimenti_senza_allegato import conta_senza_allegato
 
 
@@ -21,7 +22,7 @@ def _voce(titolo: str, n: int, livello: str, url: str) -> dict:
 
 
 def cose_da_fare(anno: int) -> list[dict]:
-    out: list[dict] = []
+    out: list[dict] = voci_da_fare_chiusura(anno)
 
     saldo_row = SaldoAnnuale.query.get(anno)
     ini_cassa = Decimal(str(saldo_row.saldo_iniziale)) if saldo_row else Decimal("0")

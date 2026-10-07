@@ -112,6 +112,7 @@ def create_app(config_name: str | None = None) -> Flask:
     from app.routes import anagrafiche_fornitori as _anagrafiche_fornitori  # noqa: F401
     from app.routes.progressivi_api import bp as progressivi_api_bp
     from app.routes.verbali import bp as verbali_bp
+    from app.routes.chiusura import bp as chiusura_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
@@ -119,6 +120,7 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(buoni_bp)
     app.register_blueprint(allegati_bp)
     app.register_blueprint(verbali_bp)
+    app.register_blueprint(chiusura_bp)
     app.register_blueprint(impostazioni_bp)
     app.register_blueprint(backup_export_bp)
     app.register_blueprint(filiali_banca_bp)
@@ -128,10 +130,13 @@ def create_app(config_name: str | None = None) -> Flask:
     app.register_blueprint(anagrafiche_bp)
 
     with app.app_context():
+        from app.models import chiusura_trimestre as _modelli_chiusura  # noqa: F401
+
         db.create_all()
         from app.services.schema_allegato import applica_schema_allegato
         from app.services.schema_anagrafiche import applica_schema_anagrafiche
         from app.services.schema_cassa import applica_schema_cassa
+        from app.services.schema_chiusura import applica_schema_chiusura
         from app.services.schema_economo import applica_schema_economo
         from app.services.schema_filiale import applica_schema_filiale_banca
         from app.services.schema_movimento import applica_patch_movimento
@@ -144,6 +149,7 @@ def create_app(config_name: str | None = None) -> Flask:
         applica_schema_verbale_verifica()
         applica_schema_cassa()
         applica_schema_economo()
+        applica_schema_chiusura()
         applica_schema_sezionale()
         applica_schema_anagrafiche()
         _ensure_default_user(app)

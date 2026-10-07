@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Chiusura trimestre — EconomIA_PA{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <h1 class="h3 mb-0">Chiusura trimestre</h1>
+  <form class="d-flex align-items-center gap-2" method="get">
+    <label class="small text-muted mb-0">Anno</label>
+    <input type="number" class="form-control form-control-sm" name="anno" value="{{ anno }}" style="width:6rem">
+    <button class="btn btn-sm btn-outline-secondary" type="submit">Aggiorna</button>
+  </form>
+</div>
+<p class="text-muted small">
+  Il trimestre si chiude solo con il fascicolo completo: estratto conto, promemoria, buoni firmati con quietanza,
+  giustificativi, distinte di prelievo e quadratura. Prospetto e giornale si calcolano dai movimenti.
+  {% if incarico_dal %}Periodi dall'incarico del {{ incarico_dal.strftime('%d/%m/%Y') }}.{% endif %}
+</p>
+{% if not mail_attiva %}
+<div class="alert alert-secondary small">
+  La mail parte da sola in chiusura, riapertura e su «Invia stato» tramite Resend (mittente Lidia).
+  Nel file <code>.env</code> serve <code>RESEND_API_KEY</code>.
+  I destinatari sono l'email dell'economo, dell'ente e il campo «Email chiusura».
+</div>
+{% endif %}
+<div class="row g-3">
+  {% for r in righe %}
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">T{{ r.trimestre }} {{ anno }}</span>
+        {% if r.chiusa %}
+        <span class="badge text-bg-success">Chiuso</span>
+        {% elif not r.dovuto %}
+        <span class="badge text-bg-secondary">In corso</span>
+        {% elif r.n_mancanti %}
+        <span class="badge text-bg-warning">Mancano {{ r.n_mancanti }}</span>
+        {% else %}
+        <span class="badge text-bg-info">Pronto</span>
+        {% endif %}
+      </div>
+      <div class="card-body d-flex justify-content-between align-items-center gap-2">
+        <div class="small text-muted">{{ r.n_presenti }} controlli a posto{% if r.n_mancanti %} · {{ r.n_mancanti }} da completare{% endif %}</div>
+        <a class="btn btn-sm btn-primary" href="{{ url_for('chiusura.dettaglio', anno=anno, trimestre=r.trimestre) }}">Apri</a>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="col-12"><p class="text-muted">Nessun trimestre in incarico per {{ anno }}.</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

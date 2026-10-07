@@ -105,6 +105,7 @@ def economo():
         row.delibera_nomina = form.delibera_nomina.data or ""
         row.telefono = form.telefono.data or ""
         row.email = form.email.data or ""
+        row.email_chiusura = form.email_chiusura.data or ""
         row.note = form.note.data or ""
 
         rel_det = salva_documento_economo(form.determina.data, "determina")

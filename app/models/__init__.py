@@ -6,6 +6,7 @@ from app.models.audit import AuditLog
 from app.models.backup_run import BackupRun
 from app.models.buono import BuonoEconomale
 from app.models.cassetto import SaldoAnnuale
+from app.models.chiusura_trimestre import ChiusuraTrimestre, VoceRiconciliazioneConto
 from app.models.economo import EconomoSettings
 from app.models.ente import EnteSettings
 from app.models.filiale_banca import FilialeBanca
@@ -23,6 +24,7 @@ __all__ = [
     "AuditLog",
     "BackupRun",
     "BuonoEconomale",
+    "ChiusuraTrimestre",
     "EconomoSettings",
     "EnteSettings",
     "FilialeBanca",
@@ -32,4 +34,5 @@ __all__ = [
     "User",
     "VerbaleTrimestrale",
     "VerbaleVerifica",
+    "VoceRiconciliazioneConto",
 ]
